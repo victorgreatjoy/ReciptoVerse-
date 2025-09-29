@@ -305,6 +305,87 @@ app.post("/associate-tokens", async (req, res) => {
   }
 });
 
+// Get NFTs owned by an account
+app.get("/get-nfts/:accountId", async (req, res) => {
+  try {
+    const { accountId } = req.params;
+    console.log(`🔍 Fetching NFTs for account: ${accountId}`);
+
+    // Fetch account NFTs from HashScan API
+    const response = await axios.get(
+      `https://testnet.mirrornode.hedera.com/api/v1/accounts/${accountId}/nfts?token.id=${RNFT_TOKEN_ID}`,
+      {
+        timeout: 10000,
+      }
+    );
+
+    const nfts = response.data.nfts || [];
+    console.log(`📊 Found ${nfts.length} NFTs for account ${accountId}`);
+
+    // Format NFT data and fetch metadata
+    const formattedNFTs = await Promise.all(
+      nfts.map(async (nft) => {
+        let metadata = null;
+
+        // Try to fetch metadata if it exists
+        if (nft.metadata) {
+          try {
+            // Decode base64 metadata
+            const metadataStr = Buffer.from(nft.metadata, "base64").toString(
+              "utf8"
+            );
+
+            // Check if it's a URL or JSON
+            if (metadataStr.startsWith("http")) {
+              // It's a URL, fetch the metadata
+              const metadataResponse = await axios.get(metadataStr, {
+                timeout: 5000,
+              });
+              metadata = metadataResponse.data;
+            } else {
+              // It's direct JSON
+              metadata = JSON.parse(metadataStr);
+            }
+          } catch (error) {
+            console.log(
+              `⚠️ Could not parse metadata for NFT ${nft.token_id}/${nft.serial_number}:`,
+              error.message
+            );
+          }
+        }
+
+        return {
+          tokenId: nft.token_id,
+          serial: nft.serial_number,
+          created: nft.created_timestamp,
+          metadata: metadata,
+          metadataUrl:
+            metadata && nft.metadata
+              ? Buffer.from(nft.metadata, "base64")
+                  .toString("utf8")
+                  .startsWith("http")
+                ? Buffer.from(nft.metadata, "base64").toString("utf8")
+                : null
+              : null,
+        };
+      })
+    );
+
+    res.json({
+      status: "success",
+      account: accountId,
+      count: formattedNFTs.length,
+      nfts: formattedNFTs,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching NFTs:", error);
+    res.status(500).json({
+      error: error.message,
+      details: "Failed to fetch NFTs from Hedera network",
+    });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ ReciptoVerse API running on port ${PORT}`);

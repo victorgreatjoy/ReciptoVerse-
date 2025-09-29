@@ -24,11 +24,38 @@ function App() {
     total: 0,
   });
   const [lastMintedNFT, setLastMintedNFT] = useState(null);
+  const [ownedNFTs, setOwnedNFTs] = useState([]);
+  const [loadingNFTs, setLoadingNFTs] = useState(false);
 
   // Simulate wallet connection for MVP testing
   const connectWallet = () => {
     setAccountId("0.0.6913837"); // Your operator account for testing
     alert("Mock wallet connected! Using operator account for testing.");
+    // Load NFTs when wallet connects
+    loadOwnedNFTs("0.0.6913837");
+  };
+
+  // Load NFTs owned by the account
+  const loadOwnedNFTs = async (accountId) => {
+    if (!accountId) return;
+
+    setLoadingNFTs(true);
+    try {
+      console.log("Loading NFTs for account:", accountId);
+      const response = await fetch(`${API_BASE}/get-nfts/${accountId}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setOwnedNFTs(data.nfts || []);
+        console.log("Loaded NFTs:", data.nfts);
+      } else {
+        console.error("Failed to load NFTs:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error loading NFTs:", error);
+    } finally {
+      setLoadingNFTs(false);
+    }
   };
 
   // Add new item to receipt
@@ -126,6 +153,9 @@ function App() {
       if (response.ok) {
         setLastMintedNFT(result);
         alert("Receipt NFT created successfully! 🎉");
+
+        // Reload NFTs to show the new one
+        loadOwnedNFTs(accountId);
 
         // Reset form
         setReceiptData({
@@ -304,6 +334,79 @@ function App() {
                 </a>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Owned NFTs Section */}
+        {accountId && (
+          <div className="owned-nfts-section">
+            <div className="section-header">
+              <h3>📋 My Receipt NFTs</h3>
+              <button
+                onClick={() => loadOwnedNFTs(accountId)}
+                disabled={loadingNFTs}
+                className="refresh-btn"
+              >
+                {loadingNFTs ? "Loading..." : "🔄 Refresh"}
+              </button>
+            </div>
+
+            {loadingNFTs ? (
+              <p>Loading your NFTs...</p>
+            ) : ownedNFTs.length > 0 ? (
+              <div className="nfts-grid">
+                {ownedNFTs.map((nft, index) => (
+                  <div key={index} className="nft-card">
+                    <h4>Receipt NFT #{nft.serial}</h4>
+                    <p>
+                      <strong>Token:</strong> {nft.tokenId}
+                    </p>
+                    <p>
+                      <strong>Created:</strong>{" "}
+                      {new Date(nft.created * 1000).toLocaleDateString()}
+                    </p>
+
+                    {nft.metadata && (
+                      <div className="nft-metadata">
+                        <p>
+                          <strong>Merchant:</strong> {nft.metadata.merchant}
+                        </p>
+                        <p>
+                          <strong>Total:</strong> ${nft.metadata.total}
+                        </p>
+                        <p>
+                          <strong>Items:</strong>{" "}
+                          {nft.metadata.items?.length || 0}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="nft-actions">
+                      <a
+                        href={`https://hashscan.io/testnet/token/${nft.tokenId}/${nft.serial}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="view-btn"
+                      >
+                        View on HashScan
+                      </a>
+                      {nft.metadataUrl && (
+                        <a
+                          href={nft.metadataUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="metadata-btn"
+                        >
+                          View Metadata
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No receipt NFTs found. Create your first receipt above! 📝</p>
+            )}
           </div>
         )}
       </main>
