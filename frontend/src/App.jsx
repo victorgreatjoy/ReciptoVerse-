@@ -2,19 +2,19 @@ import { useState } from "react";
 import "./App.css";
 
 // Add error boundary logging
-console.log('🚀 ReciptoVerse App starting...');
+console.log("🚀 ReciptoVerse App starting...");
 
 function App() {
-  console.log('📱 App component rendering...');
-  
+  console.log("📱 App component rendering...");
+
   // API Configuration for deployment
   const API_BASE = import.meta.env.PROD
     ? import.meta.env.VITE_API_URL ||
       "https://reciptoverse-production.up.railway.app"
     : "http://localhost:3000";
 
-  console.log('🌐 API_BASE:', API_BASE);
-  console.log('🔧 Environment:', import.meta.env.MODE);
+  console.log("🌐 API_BASE:", API_BASE);
+  console.log("🔧 Environment:", import.meta.env.MODE);
 
   const [accountId, setAccountId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -148,14 +148,24 @@ function App() {
     <div className="app">
       {/* Debug info */}
       {import.meta.env.DEV && (
-        <div style={{background: '#f0f0f0', padding: '10px', margin: '10px', fontSize: '12px'}}>
-          <strong>Debug Info:</strong><br/>
-          API_BASE: {API_BASE}<br/>
-          Mode: {import.meta.env.MODE}<br/>
-          Account: {accountId || 'Not connected'}
+        <div
+          style={{
+            background: "#f0f0f0",
+            padding: "10px",
+            margin: "10px",
+            fontSize: "12px",
+          }}
+        >
+          <strong>Debug Info:</strong>
+          <br />
+          API_BASE: {API_BASE}
+          <br />
+          Mode: {import.meta.env.MODE}
+          <br />
+          Account: {accountId || "Not connected"}
         </div>
       )}
-      
+
       <header className="header">
         <h1>🧾 ReciptoVerse MVP</h1>
         <p>Create receipt NFTs and earn RECV tokens</p>
