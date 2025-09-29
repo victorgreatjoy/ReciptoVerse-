@@ -1,11 +1,11 @@
-import { useState } from "react";
-import "./App.css";
+import { useState } from 'react'
+import './App.css'
 
 function App() {
   // API Configuration for deployment
-  const API_BASE = import.meta.env.PROD
-    ? import.meta.env.VITE_API_URL || "https://your-backend-url.railway.app"
-    : "http://localhost:3000";
+  const API_BASE = import.meta.env.PROD 
+    ? (import.meta.env.VITE_API_URL || 'https://reciptoverse-production.up.railway.app')
+    : 'http://localhost:3000'
 
   const [accountId, setAccountId] = useState(null);
   const [loading, setLoading] = useState(false);
