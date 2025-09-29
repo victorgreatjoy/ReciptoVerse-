@@ -34,6 +34,27 @@ app.use((req, res, next) => {
   }
 });
 
+// Environment variables validation
+const requiredEnvVars = [
+  "OPERATOR_ID",
+  "OPERATOR_KEY",
+  "RECV_TOKEN_ID",
+  "RNFT_TOKEN_ID",
+  "PINATA_JWT",
+];
+
+console.log("🔍 Checking environment variables...");
+const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error("❌ Missing required environment variables:", missingVars);
+  console.error("💡 Please add these variables to your Railway deployment:");
+  missingVars.forEach((varName) => {
+    console.error(`   ${varName}=your_value_here`);
+  });
+  process.exit(1);
+}
+
 // Hedera client setup
 const client = Client.forTestnet();
 const operatorKey = PrivateKey.fromStringECDSA(process.env.OPERATOR_KEY);
