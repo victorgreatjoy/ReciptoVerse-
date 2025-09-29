@@ -8,6 +8,9 @@
 # Backup files - ignore backup folder
 backup/
 
+# Contracts folder - ignore contracts folder
+contracts/
+
 # Logs
 logs
 *.log
