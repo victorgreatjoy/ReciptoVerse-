@@ -1,57 +1,117 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 
 const Header = () => {
-  // Simple scroll-to-section logic
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-sm">
-      <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-white">
-          <Link to="/">
-            <span className="text-blue-400">Recipto</span>Verse
-          </Link>
-        </h1>
-        <nav className="hidden md:flex space-x-8 items-center">
-          <button
-            onClick={() => scrollToSection("features")}
-            className="hover:text-blue-400 transition-colors"
+    <header className="bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50 border-b border-slate-800">
+      <div className="container mx-auto px-6 h-20 flex justify-between items-center">
+        <Link to="/" className="text-2xl font-bold text-white">
+          Recipto<span className="text-cyan-400">Verse</span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-8">
+          <Link
+            to="/"
+            className="text-slate-300 hover:text-cyan-400 transition-colors"
           >
-            Features
-          </button>
-          <button
-            onClick={() => scrollToSection("how-it-works")}
-            className="hover:text-blue-400 transition-colors"
+            Home
+          </Link>
+          <Link
+            to="/about"
+            className="text-slate-300 hover:text-cyan-400 transition-colors"
+          >
+            About
+          </Link>
+          <Link
+            to="/how-it-works"
+            className="text-slate-300 hover:text-cyan-400 transition-colors"
           >
             How It Works
-          </button>
-          <button
-            onClick={() => scrollToSection("ecosystem")}
-            className="hover:text-blue-400 transition-colors"
+          </Link>
+          <Link
+            to="/white-receipts"
+            className="text-slate-300 hover:text-cyan-400 transition-colors"
           >
-            Ecosystem
-          </button>
-          <button
-            onClick={() => scrollToSection("token")}
-            className="hover:text-blue-400 transition-colors"
+            White Receipts
+          </Link>
+          <Link
+            to="/contact"
+            className="text-slate-300 hover:text-cyan-400 transition-colors"
           >
-            Token
-          </button>
+            Contact
+          </Link>
         </nav>
-        {/* THIS IS THE LINK TO THE APP */}
-        <Link
-          to="/dashboard"
-          className="cta-button bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-full"
-        >
-          Launch App
-        </Link>
+
+        <div className="hidden md:flex">
+          <Link
+            to="/dashboard"
+            className="bg-cyan-500 text-white font-bold px-6 py-2 rounded-lg hover:bg-cyan-600 transition-all duration-300"
+          >
+            Launch App
+          </Link>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <button onClick={() => setIsOpen(!isOpen)} className="text-white">
+            {isOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="md:hidden bg-slate-900 pb-6 px-6 space-y-4">
+          <nav className="flex flex-col space-y-4">
+            <Link
+              to="/"
+              onClick={() => setIsOpen(false)}
+              className="text-slate-300 hover:text-cyan-400 transition-colors text-lg"
+            >
+              Home
+            </Link>
+            <Link
+              to="/about"
+              onClick={() => setIsOpen(false)}
+              className="text-slate-300 hover:text-cyan-400 transition-colors text-lg"
+            >
+              About
+            </Link>
+            <Link
+              to="/how-it-works"
+              onClick={() => setIsOpen(false)}
+              className="text-slate-300 hover:text-cyan-400 transition-colors text-lg"
+            >
+              How It Works
+            </Link>
+            <Link
+              to="/white-receipts"
+              onClick={() => setIsOpen(false)}
+              className="text-slate-300 hover:text-cyan-400 transition-colors text-lg"
+            >
+              White Receipts
+            </Link>
+            <Link
+              to="/contact"
+              onClick={() => setIsOpen(false)}
+              className="text-slate-300 hover:text-cyan-400 transition-colors text-lg"
+            >
+              Contact
+            </Link>
+            <Link
+              to="/dashboard"
+              onClick={() => setIsOpen(false)}
+              className="bg-cyan-500 text-white font-bold px-6 py-3 rounded-lg hover:bg-cyan-600 transition-all duration-300 text-center"
+            >
+              Launch App
+            </Link>
+          </nav>
+        </div>
+      )}
     </header>
   );
 };
