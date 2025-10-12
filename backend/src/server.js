@@ -311,16 +311,26 @@ app.get("/get-nfts/:accountId", async (req, res) => {
     const { accountId } = req.params;
     console.log(`🔍 Fetching NFTs for account: ${accountId}`);
 
+    // Handle both Hedera account IDs (0.0.xxxxx) and Ethereum addresses (0x...)
+    let queryAccountId = accountId;
+    
+    // If it's an Ethereum address (starts with 0x), use it directly
+    // The Hedera Mirror Node supports both formats
+    if (accountId.startsWith("0x")) {
+      console.log("📱 Detected Ethereum address, using EVM compatibility");
+      queryAccountId = accountId.toLowerCase();
+    }
+
     // Fetch account NFTs from HashScan API
     const response = await axios.get(
-      `https://testnet.mirrornode.hedera.com/api/v1/accounts/${accountId}/nfts?token.id=${RNFT_TOKEN_ID}`,
+      `https://testnet.mirrornode.hedera.com/api/v1/accounts/${queryAccountId}/nfts?token.id=${RNFT_TOKEN_ID}`,
       {
         timeout: 10000,
       }
     );
 
     const nfts = response.data.nfts || [];
-    console.log(`📊 Found ${nfts.length} NFTs for account ${accountId}`);
+    console.log(`📊 Found ${nfts.length} NFTs for account ${queryAccountId}`);
 
     // Format NFT data and fetch metadata
     const formattedNFTs = await Promise.all(
@@ -373,15 +383,27 @@ app.get("/get-nfts/:accountId", async (req, res) => {
 
     res.json({
       status: "success",
-      account: accountId,
+      account: queryAccountId,
+      originalAccount: accountId,
       count: formattedNFTs.length,
       nfts: formattedNFTs,
     });
   } catch (error) {
     console.error("❌ Error fetching NFTs:", error);
+    
+    // More detailed error logging
+    if (error.response) {
+      console.error("🔍 API Response Error:", {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    }
+    
     res.status(500).json({
       error: error.message,
-      details: "Failed to fetch NFTs from Hedera network",
+      details: error.response?.data?.message || "Failed to fetch NFTs from Hedera network",
+      apiError: error.response?.status || null
     });
   }
 });
