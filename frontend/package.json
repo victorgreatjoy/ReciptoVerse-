@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@hashgraph/hashconnect": "^1.24.0",
-    "@hashgraph/hedera-wallet-connect": "^1.5.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

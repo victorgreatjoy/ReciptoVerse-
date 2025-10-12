@@ -2,7 +2,8 @@ import React from "react";
 
 const Team = () => {
   const teamMembers = [
-    { name: "Victor", title: "Founder & CEO" },
+    { name: "Victor Egbelu", title: "Founder" },
+    { name: "Chioma Udom", title: "Project Manager" },
     { name: "Leandro Mirante", title: "Lead Blockchain Dev / CTO" },
   ];
 

@@ -15,8 +15,12 @@ const ContactPage = () => {
               Contact Us
             </h1>
             <p className="mt-4 text-lg text-slate-400 max-w-2xl mx-auto">
-              We're building the future of receipts. Whether you're a user,
-              developer, or potential partner, we want to hear from you.
+              We’re pioneering the future of digital transactions through a
+              smart receipt Web3 infrastructure, designed to power a
+              transparent, connected, and intelligent ecosystem. Whether you’re
+              a user, developer, or strategic partner, join us in shaping the
+              next generation of digital receipts and redefining how the world
+              experiences transaction data.
             </p>
           </div>
 

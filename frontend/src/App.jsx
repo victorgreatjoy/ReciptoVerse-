@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { WalletProvider } from "./contexts/WalletContext";
+import WalletConnection from "./components/WalletConnection";
+import ReceiptCreator from "./components/ReceiptCreator";
+import NFTGallery from "./components/NFTGallery";
 import "./App.css";
 
 // Add error boundary logging
 console.log("🚀 ReciptoVerse App starting...");
 
-function App() {
+function AppContent() {
   console.log("📱 App component rendering...");
 
   // API Configuration for deployment
@@ -16,401 +20,91 @@ function App() {
   console.log("🌐 API_BASE:", API_BASE);
   console.log("🔧 Environment:", import.meta.env.MODE);
 
-  const [accountId, setAccountId] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [receiptData, setReceiptData] = useState({
-    merchant: "",
-    items: [{ name: "", price: "", quantity: 1 }],
-    total: 0,
-  });
   const [lastMintedNFT, setLastMintedNFT] = useState(null);
-  const [ownedNFTs, setOwnedNFTs] = useState([]);
-  const [loadingNFTs, setLoadingNFTs] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
-  // Simulate wallet connection for MVP testing
-  const connectWallet = () => {
-    setAccountId("0.0.6913837"); // Your operator account for testing
-    alert("Mock wallet connected! Using operator account for testing.");
-    // Load NFTs when wallet connects
-    loadOwnedNFTs("0.0.6913837");
+  // Add notification system
+  const addNotification = (message, type = "info") => {
+    const id = Date.now();
+    const notification = { id, message, type };
+    setNotifications((prev) => [...prev, notification]);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 5000);
   };
 
-  // Load NFTs owned by the account
-  const loadOwnedNFTs = async (accountId) => {
-    if (!accountId) return;
-
-    setLoadingNFTs(true);
-    try {
-      console.log("Loading NFTs for account:", accountId);
-      const response = await fetch(`${API_BASE}/get-nfts/${accountId}`);
-
-      if (response.ok) {
-        const data = await response.json();
-        setOwnedNFTs(data.nfts || []);
-        console.log("Loaded NFTs:", data.nfts);
-      } else {
-        console.error("Failed to load NFTs:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error loading NFTs:", error);
-    } finally {
-      setLoadingNFTs(false);
-    }
-  };
-
-  // Add new item to receipt
-  const addItem = () => {
-    setReceiptData((prev) => ({
-      ...prev,
-      items: [...prev.items, { name: "", price: "", quantity: 1 }],
-    }));
-  };
-
-  // Update item in receipt
-  const updateItem = (index, field, value) => {
-    const newItems = [...receiptData.items];
-    newItems[index] = { ...newItems[index], [field]: value };
-
-    // Calculate total
-    const total = newItems.reduce((sum, item) => {
-      return (
-        sum + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)
-      );
-    }, 0);
-
-    setReceiptData((prev) => ({
-      ...prev,
-      items: newItems,
-      total: total,
-    }));
-  };
-
-  // Remove item from receipt
-  const removeItem = (index) => {
-    if (receiptData.items.length > 1) {
-      const newItems = receiptData.items.filter((_, i) => i !== index);
-      const total = newItems.reduce((sum, item) => {
-        return (
-          sum + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)
-        );
-      }, 0);
-
-      setReceiptData((prev) => ({
-        ...prev,
-        items: newItems,
-        total: total,
-      }));
-    }
-  };
-
-  // Create receipt NFT
-  const createReceipt = async () => {
-    if (!accountId) {
-      alert("Please connect your wallet first!");
-      return;
-    }
-
-    if (
-      !receiptData.merchant ||
-      receiptData.items.some((item) => !item.name || !item.price)
-    ) {
-      alert("Please fill in all receipt details!");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // First associate tokens
-      console.log("Associating tokens...");
-      const associateResponse = await fetch(`${API_BASE}/associate-tokens`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId }),
-      });
-
-      if (!associateResponse.ok) {
-        const error = await associateResponse.json();
-        console.log("Association response:", error);
-        // Continue anyway - tokens might already be associated
-      }
-
-      // Create receipt NFT
-      console.log("Creating receipt NFT...");
-      const response = await fetch(`${API_BASE}/mint-receipt`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          merchant: receiptData.merchant,
-          items: receiptData.items,
-          total: receiptData.total,
-          customerWallet: accountId,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        setLastMintedNFT(result);
-        alert("Receipt NFT created successfully! 🎉");
-
-        // Reload NFTs to show the new one
-        loadOwnedNFTs(accountId);
-
-        // Reset form
-        setReceiptData({
-          merchant: "",
-          items: [{ name: "", price: "", quantity: 1 }],
-          total: 0,
-        });
-      } else {
-        throw new Error(result.error || "Failed to create receipt");
-      }
-    } catch (error) {
-      console.error("Error creating receipt:", error);
-      alert("Failed to create receipt: " + error.message);
-    } finally {
-      setLoading(false);
-    }
+  const removeNotification = (id) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   return (
     <div className="app">
+      {/* Notifications */}
+      {notifications.length > 0 && (
+        <div className="notifications">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`notification ${notification.type}`}
+              onClick={() => removeNotification(notification.id)}
+            >
+              <span>{notification.message}</span>
+              <button className="notification-close">×</button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Debug info */}
       {import.meta.env.DEV && (
-        <div
-          style={{
-            background: "#f0f0f0",
-            padding: "10px",
-            margin: "10px",
-            fontSize: "12px",
-          }}
-        >
+        <div className="debug-info">
           <strong>Debug Info:</strong>
           <br />
           API_BASE: {API_BASE}
           <br />
           Mode: {import.meta.env.MODE}
-          <br />
-          Account: {accountId || "Not connected"}
         </div>
       )}
 
       <header className="header">
-        <h1>🧾 ReciptoVerse MVP</h1>
-        <p>Create receipt NFTs and earn RECV tokens</p>
+        <div className="header-content">
+          <div className="header-text">
+            <h1>🧾 ReciptoVerse</h1>
+            <p>
+              Transform your receipts into valuable NFTs and earn RECV tokens
+            </p>
+          </div>
+          <div className="header-wallet">
+            <WalletConnection />
+          </div>
+        </div>
       </header>
 
       <main className="main">
-        {/* Wallet Connection */}
-        <div className="wallet-section">
-          {!accountId ? (
-            <button
-              onClick={connectWallet}
-              disabled={loading}
-              className="connect-btn"
-            >
-              Connect Wallet (Mock)
-            </button>
-          ) : (
-            <div className="wallet-connected">
-              <span className="status">✅ Connected</span>
-              <span className="account">{accountId}</span>
-            </div>
-          )}
-        </div>
+        <ReceiptCreator
+          apiBase={API_BASE}
+          onMintSuccess={(nftData) => {
+            setLastMintedNFT(nftData);
+            addNotification("Receipt NFT created successfully! 🎉", "success");
+          }}
+          onError={(error) => {
+            addNotification(`Error: ${error}`, "error");
+          }}
+        />
 
-        {/* Receipt Form */}
-        {accountId && (
-          <div className="receipt-form">
-            <h2>Create Receipt</h2>
-
-            <div className="form-group">
-              <label>Merchant Name:</label>
-              <input
-                type="text"
-                value={receiptData.merchant}
-                onChange={(e) =>
-                  setReceiptData((prev) => ({
-                    ...prev,
-                    merchant: e.target.value,
-                  }))
-                }
-                placeholder="e.g., Coffee Shop Downtown"
-              />
-            </div>
-
-            <div className="items-section">
-              <h3>Items:</h3>
-              {receiptData.items.map((item, index) => (
-                <div key={index} className="item-row">
-                  <input
-                    type="text"
-                    placeholder="Item name"
-                    value={item.name}
-                    onChange={(e) => updateItem(index, "name", e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    step="0.01"
-                    value={item.price}
-                    onChange={(e) => updateItem(index, "price", e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Qty"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      updateItem(index, "quantity", e.target.value)
-                    }
-                  />
-                  {receiptData.items.length > 1 && (
-                    <button
-                      onClick={() => removeItem(index)}
-                      className="remove-btn"
-                    >
-                      ❌
-                    </button>
-                  )}
-                </div>
-              ))}
-
-              <button onClick={addItem} className="add-item-btn">
-                + Add Item
-              </button>
-            </div>
-
-            <div className="total-section">
-              <strong>Total: ${receiptData.total.toFixed(2)}</strong>
-            </div>
-
-            <button
-              onClick={createReceipt}
-              disabled={loading}
-              className="create-btn"
-            >
-              {loading ? "Creating Receipt NFT..." : "Create Receipt NFT"}
-            </button>
-          </div>
-        )}
-
-        {/* Last Minted NFT */}
-        {lastMintedNFT && (
-          <div className="nft-result">
-            <h3>🎉 Receipt NFT Created!</h3>
-            <div className="nft-details">
-              <p>
-                <strong>NFT ID:</strong> {lastMintedNFT.receiptNFT}
-              </p>
-              <p>
-                <strong>Reward:</strong> {lastMintedNFT.reward}
-              </p>
-              <p>
-                <strong>Status:</strong> {lastMintedNFT.status}
-              </p>
-              <p>
-                <strong>Test Mode:</strong>{" "}
-                {lastMintedNFT.testMode ? "Yes" : "No"}
-              </p>
-
-              <div className="nft-links">
-                <a
-                  href={lastMintedNFT.nftViewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="view-btn"
-                >
-                  View on HashScan
-                </a>
-                <a
-                  href={lastMintedNFT.metadataUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="metadata-btn"
-                >
-                  View Metadata
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Owned NFTs Section */}
-        {accountId && (
-          <div className="owned-nfts-section">
-            <div className="section-header">
-              <h3>📋 My Receipt NFTs</h3>
-              <button
-                onClick={() => loadOwnedNFTs(accountId)}
-                disabled={loadingNFTs}
-                className="refresh-btn"
-              >
-                {loadingNFTs ? "Loading..." : "🔄 Refresh"}
-              </button>
-            </div>
-
-            {loadingNFTs ? (
-              <p>Loading your NFTs...</p>
-            ) : ownedNFTs.length > 0 ? (
-              <div className="nfts-grid">
-                {ownedNFTs.map((nft, index) => (
-                  <div key={index} className="nft-card">
-                    <h4>Receipt NFT #{nft.serial}</h4>
-                    <p>
-                      <strong>Token:</strong> {nft.tokenId}
-                    </p>
-                    <p>
-                      <strong>Created:</strong>{" "}
-                      {new Date(nft.created * 1000).toLocaleDateString()}
-                    </p>
-
-                    {nft.metadata && (
-                      <div className="nft-metadata">
-                        <p>
-                          <strong>Merchant:</strong> {nft.metadata.merchant}
-                        </p>
-                        <p>
-                          <strong>Total:</strong> ${nft.metadata.total}
-                        </p>
-                        <p>
-                          <strong>Items:</strong>{" "}
-                          {nft.metadata.items?.length || 0}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="nft-actions">
-                      <a
-                        href={`https://hashscan.io/testnet/token/${nft.tokenId}/${nft.serial}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="view-btn"
-                      >
-                        View on HashScan
-                      </a>
-                      {nft.metadataUrl && (
-                        <a
-                          href={nft.metadataUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="metadata-btn"
-                        >
-                          View Metadata
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p>No receipt NFTs found. Create your first receipt above! 📝</p>
-            )}
-          </div>
-        )}
+        <NFTGallery apiBase={API_BASE} lastMintedNFT={lastMintedNFT} />
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <WalletProvider>
+      <AppContent />
+    </WalletProvider>
   );
 }
 
