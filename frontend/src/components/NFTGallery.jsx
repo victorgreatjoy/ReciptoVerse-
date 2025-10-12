@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../contexts/WalletContext";
 import "./NFTGallery.css";
 
@@ -9,7 +9,7 @@ const NFTGallery = ({ apiBase, lastMintedNFT }) => {
   const [error, setError] = useState(null);
 
   // Load NFTs owned by the account
-  const loadOwnedNFTs = async (accountId) => {
+  const loadOwnedNFTs = useCallback(async (accountId) => {
     if (!accountId) return;
 
     setLoadingNFTs(true);
@@ -17,23 +17,52 @@ const NFTGallery = ({ apiBase, lastMintedNFT }) => {
 
     try {
       console.log("Loading NFTs for account:", accountId);
-      const response = await fetch(`${apiBase}/get-nfts/${accountId}`);
+      console.log("API Base:", apiBase);
+      console.log("Full URL:", `${apiBase}/get-nfts/${accountId}`);
+      
+      const response = await fetch(`${apiBase}/get-nfts/${accountId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log("NFT API Response status:", response.status);
 
       if (response.ok) {
         const data = await response.json();
+        console.log("NFT API Response data:", data);
         setOwnedNFTs(data.nfts || []);
         console.log("Loaded NFTs:", data.nfts);
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to load NFTs");
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error("NFT API Error Response:", errorData);
+        throw new Error(
+          errorData.error || 
+          errorData.details || 
+          `Failed to load NFTs (${response.status})`
+        );
       }
     } catch (error) {
       console.error("Error loading NFTs:", error);
-      setError(error.message);
+      
+      // Provide more specific error messages
+      let errorMessage = error.message;
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorMessage = 'Unable to connect to the backend API. The server may be starting up or temporarily unavailable.';
+      } else if (error.message.includes('404')) {
+        errorMessage = 'NFT service endpoint not found. This might be due to a deployment in progress.';
+      } else if (error.message.includes('500')) {
+        errorMessage = 'Server error while loading NFTs. Please try again in a moment.';
+      } else if (accountId.startsWith('0x')) {
+        errorMessage = `${errorMessage} (Note: Using MetaMask address format - this requires backend support for Ethereum addresses)`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoadingNFTs(false);
     }
-  };
+  }, [apiBase]);
 
   // Load NFTs when wallet connects or account changes
   useEffect(() => {
@@ -42,7 +71,7 @@ const NFTGallery = ({ apiBase, lastMintedNFT }) => {
     } else {
       setOwnedNFTs([]);
     }
-  }, [isConnected, accountId, apiBase]);
+  }, [isConnected, accountId, loadOwnedNFTs]);
 
   // Reload NFTs when a new NFT is minted
   useEffect(() => {
@@ -52,7 +81,7 @@ const NFTGallery = ({ apiBase, lastMintedNFT }) => {
         loadOwnedNFTs(accountId);
       }, 2000);
     }
-  }, [lastMintedNFT, isConnected, accountId]);
+  }, [lastMintedNFT, isConnected, accountId, loadOwnedNFTs]);
 
   if (!isConnected) {
     return null; // Don't show gallery if wallet not connected
@@ -170,6 +199,17 @@ const NFTGallery = ({ apiBase, lastMintedNFT }) => {
           </button>
         </div>
 
+        {/* Wallet compatibility notice */}
+        {accountId && accountId.startsWith('0x') && (
+          <div className="wallet-info">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            <span>Using MetaMask - NFT loading may take a moment as we fetch from Hedera network</span>
+          </div>
+        )}
+
         {error && (
           <div className="error-message">
             <svg
@@ -201,7 +241,7 @@ const NFTGallery = ({ apiBase, lastMintedNFT }) => {
           </div>
         ) : ownedNFTs.length > 0 ? (
           <div className="nfts-grid">
-            {ownedNFTs.map((nft, index) => (
+            {ownedNFTs.map((nft) => (
               <div key={`${nft.tokenId}-${nft.serial}`} className="nft-card">
                 <div className="nft-card-header">
                   <div className="nft-icon">🧾</div>
