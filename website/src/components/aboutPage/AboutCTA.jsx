@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const AboutCTA = () => {
   return (
-    <section className="py-20 bg-slate-800">
+    <section className="py-20 bg-slate-800/75">
       <div className="container mx-auto px-6 text-center">
         <h2 className="text-3xl font-bold text-white mb-8">
           Ready to Dive Deeper?

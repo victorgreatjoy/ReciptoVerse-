@@ -2,7 +2,7 @@ import React from "react";
 
 const ProblemSolution = () => {
   return (
-    <section className="py-20 bg-slate-800 text-white">
+    <section className="py-20 bg-slate-800/75 text-white">
       <div className="container mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>

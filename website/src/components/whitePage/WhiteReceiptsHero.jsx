@@ -2,7 +2,7 @@ import React from "react";
 
 const WhiteReceiptsHero = () => {
   return (
-    <section className="relative py-32 text-center bg-slate-900 text-white">
+    <section className="relative py-32 text-center bg-slate-900/75 text-white">
       <div className="absolute inset-0 bg-grid-slate-800 [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
       <div className="container mx-auto px-6 relative">
         <h1 className="text-5xl md:text-6xl font-extrabold mb-4 leading-tight">

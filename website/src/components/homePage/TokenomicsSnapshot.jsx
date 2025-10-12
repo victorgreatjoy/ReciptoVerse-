@@ -9,7 +9,7 @@ const TokenomicsSnapshot = () => {
   ];
 
   return (
-    <section className="py-20 bg-slate-800">
+    <section className="py-20 bg-slate-800/75">
       <div className="container mx-auto px-6 text-center">
         <h2 className="text-4xl font-bold text-white mb-4">Mini Tokenomics</h2>
         <p className="text-slate-400 mb-12">

@@ -13,7 +13,7 @@ const Explainer = () => {
       icon: <FileText size={40} className="mb-4 text-cyan-400" />,
       title: "Collect rNFTs",
       description:
-        "Receive a digital receipt-NFT (rNFT) for every purchase, turning waste into a digital asset.",
+        "Receive a digital receipt-NFT (rNFT) after reaching a certain spending threshold, turning waste into a digital asset.",
     },
     {
       icon: <BarChart size={40} className="mb-4 text-cyan-400" />,
@@ -24,7 +24,9 @@ const Explainer = () => {
   ];
 
   return (
-    <section className="py-20 bg-slate-900">
+    <section className="py-20 bg-slate-900/75">
+      {" "}
+      {/* Changed to semi-transparent */}
       <div className="container mx-auto px-6 text-center">
         <h2 className="text-4xl font-bold mb-12 text-white">
           Your Receipts, Reinvented in 3 Steps

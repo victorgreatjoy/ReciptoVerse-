@@ -2,13 +2,12 @@ import React from "react";
 
 const Team = () => {
   const teamMembers = [
-    { name: "Alex Chen", title: "Founder & CEO" },
-    { name: "Brenda Smith", title: "Lead Blockchain Dev" },
-    { name: "Carlos Diaz", title: "Head of Product" },
+    { name: "Victor", title: "Founder & CEO" },
+    { name: "Leandro Mirante", title: "Lead Blockchain Dev / CTO" },
   ];
 
   return (
-    <section className="py-20 bg-slate-900">
+    <section className="py-20 bg-slate-900/75">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-white">

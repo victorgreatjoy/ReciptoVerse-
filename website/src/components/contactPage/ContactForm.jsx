@@ -1,179 +1,153 @@
-import React, { useState } from "react";
-import { Twitter, Linkedin, MessageSquare, Send } from "lucide-react"; // Using MessageSquare for Telegram/Discord vibe
+import React, { useRef, useState } from "react";
+import emailjs from "@emailjs/browser";
+import {
+  User,
+  Mail,
+  MessageSquare,
+  Briefcase,
+  Phone,
+  Loader2,
+  CheckCircle,
+  AlertTriangle,
+} from "lucide-react";
 
 const ContactForm = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    messageType: "General",
-    message: "",
-  });
-  const [status, setStatus] = useState("");
+  const form = useRef();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState(null); // 'success', 'error', or null
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevState) => ({ ...prevState, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
+  const sendEmail = (e) => {
     e.preventDefault();
-    setStatus("Sending...");
-    // In a real app, you would integrate with an email service like EmailJS, Formspree, or a custom backend.
-    console.log("Form data submitted:", formData);
-    setTimeout(() => {
-      setStatus("Your message has been sent!");
-      setFormData({ name: "", email: "", messageType: "General", message: "" });
-    }, 1500);
+    setIsSubmitting(true);
+    setSubmissionStatus(null);
+
+    // Replace with your actual EmailJS Service ID, Template ID, and Public Key
+    const serviceID = "service_shsdg7w";
+    const templateID = "template_g5zxqax";
+    const publicKey = "N98qGTzaV3AEu4Jf0";
+
+    emailjs
+      .sendForm(serviceID, templateID, form.current, publicKey)
+      .then(
+        (result) => {
+          console.log(result.text);
+          setSubmissionStatus("success");
+          form.current.reset();
+        },
+        (error) => {
+          console.log(error.text);
+          setSubmissionStatus("error");
+        }
+      )
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   return (
-    <section className="py-20 bg-slate-800 text-white">
-      <div className="container mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-start">
-          {/* Form */}
-          <div className="bg-slate-900 p-8 rounded-lg border border-slate-700">
-            <h2 className="text-3xl font-bold mb-6">Send us a Message</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-slate-300 mb-2"
-                >
-                  Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-slate-800 border border-slate-600 rounded-md p-3 focus:ring-cyan-500 focus:border-cyan-500 transition"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-slate-300 mb-2"
-                >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-slate-800 border border-slate-600 rounded-md p-3 focus:ring-cyan-500 focus:border-cyan-500 transition"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="messageType"
-                  className="block text-sm font-medium text-slate-300 mb-2"
-                >
-                  Message Type
-                </label>
-                <select
-                  id="messageType"
-                  name="messageType"
-                  value={formData.messageType}
-                  onChange={handleChange}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-md p-3 focus:ring-cyan-500 focus:border-cyan-500 transition"
-                >
-                  <option>General</option>
-                  <option>Partnership</option>
-                  <option>Merchant</option>
-                  <option>Developer</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="message"
-                  className="block text-sm font-medium text-slate-300 mb-2"
-                >
-                  Message
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows="5"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-slate-800 border border-slate-600 rounded-md p-3 focus:ring-cyan-500 focus:border-cyan-500 transition"
-                ></textarea>
-              </div>
-              <div>
-                <button
-                  type="submit"
-                  className="bg-cyan-500 text-white font-bold px-8 py-3 rounded-lg hover:bg-cyan-600 transition-all duration-300 w-full inline-flex items-center justify-center"
-                >
-                  <Send className="mr-2" size={20} />
-                  Send Message
-                </button>
-              </div>
-              {status && (
-                <p className="text-center text-slate-300 mt-4">{status}</p>
-              )}
-            </form>
-          </div>
-          {/* Info & Socials */}
-          <div className="pt-8">
-            <h3 className="text-2xl font-bold mb-4">Contact Information</h3>
-            <p className="text-slate-300 mb-6">
-              Email us directly or connect with our community on social media.
-            </p>
-            <div className="mb-8">
-              <span className="font-semibold">Email:</span>
-              <a
-                href="mailto:info@reciptoverse.io"
-                className="text-cyan-400 ml-2 hover:underline"
-              >
-                info@reciptoverse.io
-              </a>
-            </div>
+    <div>
+      <h2 className="text-2xl font-bold text-white mb-1">Send a Message</h2>
+      <p className="text-slate-400 mb-6">
+        Fill out the form below and we'll get back to you.
+      </p>
 
-            <h3 className="text-2xl font-bold mb-4">Join the Conversation</h3>
-            <div className="flex space-x-4">
-              <a
-                href="#"
-                className="p-3 bg-slate-700 rounded-full hover:bg-cyan-500 transition-colors"
-              >
-                <Twitter size={24} />
-              </a>
-              <a
-                href="#"
-                className="p-3 bg-slate-700 rounded-full hover:bg-cyan-500 transition-colors"
-              >
-                <MessageSquare size={24} />
-              </a>
-              <a
-                href="#"
-                className="p-3 bg-slate-700 rounded-full hover:bg-cyan-500 transition-colors"
-              >
-                <MessageSquare size={24} />
-              </a>
-              <a
-                href="#"
-                className="p-3 bg-slate-700 rounded-full hover:bg-cyan-500 transition-colors"
-              >
-                <Linkedin size={24} />
-              </a>
-            </div>
-            <div className="mt-12 bg-slate-900/50 p-6 rounded-lg border border-cyan-500/30">
-              <h4 className="font-bold text-xl text-cyan-400 mb-2">
-                Partnership Inquiry
-              </h4>
-              <p className="text-slate-300">
-                'Join the ecosystem and build the commerce of the future.'
-              </p>
-            </div>
-          </div>
+      {submissionStatus === "success" && (
+        <div className="mb-4 p-4 bg-green-500/10 border border-green-500/30 text-green-300 rounded-lg flex items-center">
+          <CheckCircle className="mr-3" />
+          <span>Your message has been sent successfully!</span>
         </div>
-      </div>
-    </section>
+      )}
+      {submissionStatus === "error" && (
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 text-red-300 rounded-lg flex items-center">
+          <AlertTriangle className="mr-3" />
+          <span>Something went wrong. Please try again.</span>
+        </div>
+      )}
+
+      <form ref={form} onSubmit={sendEmail} className="space-y-4">
+        {/* Name Input */}
+        <div className="relative">
+          <User
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={20}
+          />
+          <input
+            type="text"
+            name="user_name"
+            placeholder="Full Name"
+            required
+            className="w-full bg-slate-700/50 border border-slate-600 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+          />
+        </div>
+
+        {/* Email Input */}
+        <div className="relative">
+          <Mail
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={20}
+          />
+          <input
+            type="email"
+            name="user_email"
+            placeholder="Email Address"
+            required
+            className="w-full bg-slate-700/50 border border-slate-600 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+          />
+        </div>
+
+        {/* Message Type Select */}
+        <div className="relative">
+          <Briefcase
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={20}
+          />
+          <select
+            name="message_type"
+            required
+            className="w-full bg-slate-700/50 border border-slate-600 text-white rounded-lg pl-10 pr-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+          >
+            <option value="" disabled selected>
+              Select Inquiry Type
+            </option>
+            <option value="General">General</option>
+            <option value="Partnership">Partnership</option>
+            <option value="Merchant">Merchant</option>
+            <option value="Developer">Developer</option>
+          </select>
+        </div>
+
+        {/* Message Textarea */}
+        <div className="relative">
+          <MessageSquare
+            className="absolute left-3 top-4 text-slate-400"
+            size={20}
+          />
+          <textarea
+            name="message"
+            placeholder="Your Message"
+            required
+            rows="5"
+            className="w-full bg-slate-700/50 border border-slate-600 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+          ></textarea>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full flex items-center justify-center bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-700 disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors duration-300"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin mr-2" />
+              Sending...
+            </>
+          ) : (
+            "Send Message"
+          )}
+        </button>
+      </form>
+    </div>
   );
 };
 

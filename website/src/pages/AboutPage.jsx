@@ -1,9 +1,3 @@
-import React from "react";
-
-// Main Page Components
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-
 // About Page Sections
 import AboutHero from "../components/aboutPage/AboutHero";
 import Pillars from "../components/aboutPage/Pillars";
@@ -13,8 +7,7 @@ import AboutCTA from "../components/aboutPage/AboutCTA";
 
 const AboutPage = () => {
   return (
-    <div className="bg-slate-900 font-inter">
-      <Header />
+    <div className="font-inter">
       <main>
         <AboutHero />
         <Pillars />
@@ -22,7 +15,6 @@ const AboutPage = () => {
         <Team />
         <AboutCTA />
       </main>
-      <Footer />
     </div>
   );
 };

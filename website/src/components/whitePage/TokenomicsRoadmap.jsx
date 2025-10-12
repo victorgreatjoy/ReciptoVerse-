@@ -16,7 +16,7 @@ const TokenomicsRoadmap = () => {
   ];
 
   return (
-    <section className="py-20 bg-slate-900 text-white">
+    <section className="py-20 bg-slate-900/75 text-white">
       <div className="container mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-16">
           {/* Tokenomics */}
