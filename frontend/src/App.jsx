@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { WalletProvider } from "./contexts/WalletContext";
 import WalletConnection from "./components/WalletConnection";
 import ReceiptCreator from "./components/ReceiptCreator";
@@ -68,34 +68,39 @@ function AppContent() {
         </div>
       )}
 
-      <header className="header">
-        <div className="header-content">
-          <div className="header-text">
-            <h1>🧾 ReciptoVerse</h1>
-            <p>
-              Transform your receipts into valuable NFTs and earn RECV tokens
-            </p>
+      <div className="app-container">
+        <header className="header">
+          <div className="header-content">
+            <div className="header-text">
+              <h1>🧾 ReciptoVerse</h1>
+              <p>
+                Transform your receipts into valuable NFTs and earn RECV tokens
+              </p>
+            </div>
+            <div className="header-wallet">
+              <WalletConnection />
+            </div>
           </div>
-          <div className="header-wallet">
-            <WalletConnection />
-          </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="main">
-        <ReceiptCreator
-          apiBase={API_BASE}
-          onMintSuccess={(nftData) => {
-            setLastMintedNFT(nftData);
-            addNotification("Receipt NFT created successfully! 🎉", "success");
-          }}
-          onError={(error) => {
-            addNotification(`Error: ${error}`, "error");
-          }}
-        />
+        <main className="main">
+          <ReceiptCreator
+            apiBase={API_BASE}
+            onMintSuccess={(nftData) => {
+              setLastMintedNFT(nftData);
+              addNotification(
+                "Receipt NFT created successfully! 🎉",
+                "success"
+              );
+            }}
+            onError={(error) => {
+              addNotification(`Error: ${error}`, "error");
+            }}
+          />
 
-        <NFTGallery apiBase={API_BASE} lastMintedNFT={lastMintedNFT} />
-      </main>
+          <NFTGallery apiBase={API_BASE} lastMintedNFT={lastMintedNFT} />
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,11 +1,10 @@
-/* Wallet Connection Styles */
+/* Wallet Connection Styles - Responsive */
 .wallet-connection {
   width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
+  max-width: 500px;
 }
 
-/* Connected State */
+/* Connected State - Responsive */
 .wallet-connected {
   display: flex;
   align-items: center;
@@ -15,18 +14,73 @@
   border-radius: 12px;
   color: white;
   box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .wallet-info {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  min-width: 200px;
 }
 
 .wallet-status {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.account-label {
+  font-size: 0.8em;
+  opacity: 0.8;
+}
+
+.account-id {
+  font-family: "Monaco", "Menlo", monospace;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+/* Responsive adjustments for connected state */
+@media (max-width: 768px) {
+  .wallet-connected {
+    padding: 14px 16px;
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .wallet-info {
+    min-width: unset;
+    justify-content: center;
+  }
+
+  .wallet-status {
+    justify-content: center;
+  }
+
+  .account-id {
+    font-size: 0.85em;
+  }
+}
+
+@media (max-width: 480px) {
+  .wallet-connected {
+    padding: 12px 14px;
+  }
+
+  .account-id {
+    font-size: 0.8em;
+  }
 }
 
 .status-indicator {
