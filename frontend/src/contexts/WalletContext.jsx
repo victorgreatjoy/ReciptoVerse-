@@ -49,7 +49,7 @@ export const WalletProvider = ({ children }) => {
           name: "MetaMask",
           icon: "https://cdn.iconscout.com/icon/free/png-256/metamask-2728406-2261817.png",
           description: "Connect using MetaMask (with Hedera network)",
-          type: "ethereum"
+          type: "ethereum",
         });
       }
 
@@ -61,7 +61,7 @@ export const WalletProvider = ({ children }) => {
           name: "HashPack",
           icon: "https://wallet.hashpack.app/assets/favicon/favicon.ico",
           description: "Native Hedera wallet",
-          type: "hedera"
+          type: "hedera",
         });
       }
 
@@ -73,7 +73,7 @@ export const WalletProvider = ({ children }) => {
           name: "Blade Wallet",
           icon: "https://bladewallet.io/favicon.ico",
           description: "Multi-chain wallet with Hedera support",
-          type: "hedera"
+          type: "hedera",
         });
       }
 
@@ -85,19 +85,23 @@ export const WalletProvider = ({ children }) => {
           name: "Kabila Wallet",
           icon: "https://kabila.app/favicon.ico",
           description: "Hedera-focused wallet",
-          type: "hedera"
+          type: "hedera",
         });
       }
 
       // 5. Generic Ethereum Provider (could be other wallets)
-      if (window.ethereum && !window.ethereum.isMetaMask && !window.ethereum.isHashPack) {
+      if (
+        window.ethereum &&
+        !window.ethereum.isMetaMask &&
+        !window.ethereum.isHashPack
+      ) {
         console.log("✅ Generic Ethereum provider detected");
         detectedWallets.push({
           id: "ethereum",
           name: "Browser Wallet",
           icon: "https://ethereum.org/static/a110735dade3f354a46fc2446cd52476/81d9f/eth-home-icon.png",
           description: "Connect using browser wallet",
-          type: "ethereum"
+          type: "ethereum",
         });
       }
 
@@ -111,7 +115,7 @@ export const WalletProvider = ({ children }) => {
             icon: "https://cdn.iconscout.com/icon/free/png-256/metamask-2728406-2261817.png",
             description: "Most popular wallet - Click to install",
             type: "install",
-            installUrl: "https://metamask.io/download/"
+            installUrl: "https://metamask.io/download/",
           },
           {
             id: "install-hashpack",
@@ -119,7 +123,7 @@ export const WalletProvider = ({ children }) => {
             icon: "https://wallet.hashpack.app/assets/favicon/favicon.ico",
             description: "Native Hedera wallet - Click to install",
             type: "install",
-            installUrl: "https://www.hashpack.app/download"
+            installUrl: "https://www.hashpack.app/download",
           },
           {
             id: "install-blade",
@@ -127,20 +131,54 @@ export const WalletProvider = ({ children }) => {
             icon: "https://bladewallet.io/favicon.ico",
             description: "Multi-chain support - Click to install",
             type: "install",
-            installUrl: "https://bladewallet.io/"
+            installUrl: "https://bladewallet.io/",
           }
         );
       }
 
+      // FORCE SHOW METAMASK FOR TESTING - Always show MetaMask option
+      console.log("🔧 Adding MetaMask as fallback option");
+      const hasMetaMask = detectedWallets.some((w) => w.id === "metamask");
+      if (!hasMetaMask) {
+        detectedWallets.unshift({
+          id: "metamask",
+          name: "MetaMask",
+          icon: "https://cdn.iconscout.com/icon/free/png-256/metamask-2728406-2261817.png",
+          description: "Connect using MetaMask (try anyway)",
+          type: "ethereum",
+        });
+      }
+
       setAvailableWallets(detectedWallets);
-      console.log(`🎉 Found ${detectedWallets.length} wallet options`);
+      console.log(
+        `🎉 Found ${detectedWallets.length} wallet options:`,
+        detectedWallets
+      );
+
+      // Debug: Force set wallets for testing
+      if (detectedWallets.length === 0) {
+        console.log("🚨 No wallets found, forcing MetaMask option");
+        setAvailableWallets([
+          {
+            id: "metamask",
+            name: "MetaMask",
+            icon: "https://cdn.iconscout.com/icon/free/png-256/metamask-2728406-2261817.png",
+            description: "Connect using MetaMask",
+            type: "ethereum",
+          },
+        ]);
+      }
 
       // Check for saved connection
       const savedAccount = localStorage.getItem("wallet_accountId");
       const savedWalletType = localStorage.getItem("wallet_type");
-      
+
       if (savedAccount && savedWalletType) {
-        console.log("🔄 Found saved connection:", savedAccount, savedWalletType);
+        console.log(
+          "🔄 Found saved connection:",
+          savedAccount,
+          savedWalletType
+        );
         setAccountId(savedAccount);
         setIsConnected(true);
         setSelectedWallet({
@@ -148,7 +186,6 @@ export const WalletProvider = ({ children }) => {
           description: "Restored connection",
         });
       }
-
     } catch (error) {
       console.error("❌ Wallet init failed:", error);
       setError("Failed to initialize wallet system");
@@ -169,22 +206,22 @@ export const WalletProvider = ({ children }) => {
           accounts = await connectMetaMask();
           walletName = "MetaMask";
           break;
-          
+
         case "hashpack":
           accounts = await connectHashPack();
           walletName = "HashPack";
           break;
-          
+
         case "blade":
           accounts = await connectBlade();
           walletName = "Blade Wallet";
           break;
-          
+
         case "kabila":
           accounts = await connectKabila();
           walletName = "Kabila Wallet";
           break;
-          
+
         case "ethereum":
           accounts = await connectGenericEthereum();
           walletName = "Browser Wallet";
@@ -193,8 +230,8 @@ export const WalletProvider = ({ children }) => {
         case "install-metamask":
         case "install-hashpack":
         case "install-blade": {
-          const wallet = availableWallets.find(w => w.id === walletId);
-          window.open(wallet.installUrl, '_blank');
+          const wallet = availableWallets.find((w) => w.id === walletId);
+          window.open(wallet.installUrl, "_blank");
           throw new Error("Please install the wallet and refresh the page");
         }
 
@@ -208,22 +245,21 @@ export const WalletProvider = ({ children }) => {
 
         setAccountId(selectedAccount);
         setIsConnected(true);
-        setSelectedWallet({ 
-          name: walletName, 
+        setSelectedWallet({
+          name: walletName,
           description: "Connected",
-          id: walletId
+          id: walletId,
         });
 
         // Save connection
         localStorage.setItem("wallet_accountId", selectedAccount);
         localStorage.setItem("wallet_type", walletName);
-        
+
         setIsConnecting(false);
         return true;
       } else {
         throw new Error(`No accounts returned from ${walletName}`);
       }
-
     } catch (error) {
       console.error("❌ Connection failed:", error);
       setError(error.message || "Failed to connect wallet");
@@ -239,18 +275,17 @@ export const WalletProvider = ({ children }) => {
     }
 
     console.log("📱 Connecting to MetaMask...");
-    
+
     try {
       // Request account access
       const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
+        method: "eth_requestAccounts",
       });
 
       // For Hedera, we might need to switch networks or use a different approach
       // For now, we'll use the Ethereum account format
       console.log("MetaMask accounts:", accounts);
       return accounts;
-      
     } catch (error) {
       if (error.code === 4001) {
         throw new Error("User rejected connection request");
@@ -261,16 +296,18 @@ export const WalletProvider = ({ children }) => {
 
   const connectHashPack = async () => {
     console.log("📱 Connecting to HashPack...");
-    
+
     // Try multiple HashPack connection methods
     if (window.hashpack && window.hashpack.requestAccounts) {
       return await window.hashpack.requestAccounts();
     }
-    
+
     if (window.ethereum && window.ethereum.isHashPack) {
-      return await window.ethereum.request({ method: 'hedera_requestAccounts' });
+      return await window.ethereum.request({
+        method: "hedera_requestAccounts",
+      });
     }
-    
+
     throw new Error("HashPack not available");
   };
 
@@ -280,7 +317,7 @@ export const WalletProvider = ({ children }) => {
     }
 
     console.log("📱 Connecting to Blade Wallet...");
-    
+
     try {
       const result = await window.blade.createHederaAccount();
       return [result.accountId];
@@ -295,7 +332,7 @@ export const WalletProvider = ({ children }) => {
     }
 
     console.log("📱 Connecting to Kabila Wallet...");
-    
+
     try {
       const accounts = await window.kabila.requestAccounts();
       return accounts;
@@ -310,10 +347,10 @@ export const WalletProvider = ({ children }) => {
     }
 
     console.log("📱 Connecting to generic Ethereum provider...");
-    
+
     try {
       const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
+        method: "eth_requestAccounts",
       });
       return accounts;
     } catch (error) {
@@ -342,8 +379,6 @@ export const WalletProvider = ({ children }) => {
   };
 
   return (
-    <WalletContext.Provider value={value}>
-      {children}
-    </WalletContext.Provider>
+    <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
   );
 };

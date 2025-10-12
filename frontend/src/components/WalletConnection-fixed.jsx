@@ -84,7 +84,63 @@ const WalletConnection = () => {
         )}
 
         <div className="wallet-options">
-          {availableWallets.length > 0 ? (
+          {/* Always show MetaMask button */}
+          <div className="wallet-option">
+            <button
+              onClick={() => handleConnect("metamask")}
+              disabled={isConnecting}
+              className="wallet-btn"
+              aria-label="Connect to MetaMask"
+            >
+              <div className="wallet-btn-content">
+                <div className="wallet-icon-container">
+                  <img
+                    src="https://cdn.iconscout.com/icon/free/png-256/metamask-2728406-2261817.png"
+                    alt="MetaMask icon"
+                    className="wallet-icon"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+                  <div
+                    className="wallet-icon-fallback"
+                    style={{ display: "none" }}
+                  >
+                    🦊
+                  </div>
+                </div>
+                <div className="wallet-details">
+                  <span className="wallet-name">MetaMask</span>
+                  <span className="wallet-description">
+                    Connect using MetaMask wallet
+                  </span>
+                </div>
+                <div className="connect-indicator">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path d="M15 3h6v6"></path>
+                    <path d="M10 14l9-9"></path>
+                    <path d="M21 3L9 15l-3-3-3-3"></path>
+                  </svg>
+                </div>
+              </div>
+              {isConnecting && (
+                <div className="connecting-overlay">
+                  <div className="spinner"></div>
+                  <span>Connecting...</span>
+                </div>
+              )}
+            </button>
+          </div>
+
+          {/* Show detected wallets if any */}
+          {availableWallets.length > 0 &&
             availableWallets.map((wallet) => (
               <div key={wallet.id} className="wallet-option">
                 <button
@@ -158,73 +214,26 @@ const WalletConnection = () => {
                   )}
                 </button>
               </div>
-            ))
-          ) : (
-            <div className="no-wallets">
-              <div className="no-wallets-icon">🦊</div>
-              <h4>Looking for Wallets...</h4>
-              <p>
-                We're checking for installed wallet extensions. If you have
-                MetaMask or other wallets installed, they should appear shortly.
-              </p>
-              <div className="scanning-spinner"></div>
-
-              {/* Fallback button for MetaMask */}
-              <div style={{ marginTop: "20px" }}>
-                <button
-                  onClick={() => handleConnect("metamask")}
-                  className="wallet-btn"
-                  style={{
-                    width: "100%",
-                    background: "white",
-                    border: "2px solid #f59e0b",
-                    borderRadius: "12px",
-                    padding: "16px 20px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                  }}
-                >
-                  <img
-                    src="https://cdn.iconscout.com/icon/free/png-256/metamask-2728406-2261817.png"
-                    alt="MetaMask"
-                    style={{ width: "32px", height: "32px" }}
-                    onError={(e) => (e.target.style.display = "none")}
-                  />
-                  <div style={{ flex: 1, textAlign: "left" }}>
-                    <div style={{ fontWeight: 600, color: "#1e293b" }}>
-                      Try MetaMask Anyway
-                    </div>
-                    <div style={{ fontSize: "0.9rem", color: "#64748b" }}>
-                      Click to attempt connection
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          )}
+            ))}
         </div>
 
-        {availableWallets.length > 0 && (
-          <div className="wallet-info-section">
-            <h4>Wallet Compatibility</h4>
-            <div className="compatibility-list">
-              <div className="compatibility-item">
-                <span className="compatibility-icon">🟢</span>
-                <span>MetaMask - Works with Hedera network configuration</span>
-              </div>
-              <div className="compatibility-item">
-                <span className="compatibility-icon">🟢</span>
-                <span>HashPack - Native Hedera wallet (recommended)</span>
-              </div>
-              <div className="compatibility-item">
-                <span className="compatibility-icon">🟢</span>
-                <span>Blade Wallet - Multi-chain support including Hedera</span>
-              </div>
+        <div className="wallet-info-section">
+          <h4>Wallet Compatibility</h4>
+          <div className="compatibility-list">
+            <div className="compatibility-item">
+              <span className="compatibility-icon">🟢</span>
+              <span>MetaMask - Works with Hedera network configuration</span>
+            </div>
+            <div className="compatibility-item">
+              <span className="compatibility-icon">🟢</span>
+              <span>HashPack - Native Hedera wallet (recommended)</span>
+            </div>
+            <div className="compatibility-item">
+              <span className="compatibility-icon">🟢</span>
+              <span>Blade Wallet - Multi-chain support including Hedera</span>
             </div>
           </div>
-        )}
+        </div>
 
         <div className="help-section">
           <h4>Need Help?</h4>

@@ -6,7 +6,7 @@ import NFTGallery from "./components/NFTGallery";
 import "./App.css";
 
 // Add error boundary logging
-console.log("🚀 ReciptoVerse App starting...");
+console.log("🚀 ReceiptoVerse App starting...");
 
 function AppContent() {
   console.log("📱 App component rendering...");
@@ -14,7 +14,7 @@ function AppContent() {
   // API Configuration for deployment
   const API_BASE = import.meta.env.PROD
     ? import.meta.env.VITE_API_URL ||
-      "https://reciptoverse-production.up.railway.app"
+      "https://ReceiptoVerse-production.up.railway.app"
     : "http://localhost:3000";
 
   console.log("🌐 API_BASE:", API_BASE);
@@ -72,7 +72,7 @@ function AppContent() {
         <header className="header">
           <div className="header-content">
             <div className="header-text">
-              <h1>🧾 ReciptoVerse</h1>
+              <h1>🧾 ReceiptoVerse</h1>
               <p>
                 Transform your receipts into valuable NFTs and earn RECV tokens
               </p>
