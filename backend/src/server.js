@@ -12,10 +12,19 @@ const axios = require("axios");
 const FormData = require("form-data");
 const fs = require("fs");
 const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, "../../.env") });
+
+// Import smart configuration system
+const config = require("./config");
+
+// Import database and routes
+const { initializeDatabase } = require("./database");
+const userRoutes = require("./userRoutes");
+const receiptRoutes = require("./receiptRoutes");
+const merchantRoutes = require("./merchantRoutes");
 
 const app = express();
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 
 // Add CORS middleware to allow frontend to connect
 app.use((req, res, next) => {
@@ -23,7 +32,7 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-API-Key"
   );
 
   // Handle preflight requests
@@ -34,49 +43,72 @@ app.use((req, res, next) => {
   }
 });
 
-// Environment variables validation
-const requiredEnvVars = [
-  "OPERATOR_ID",
-  "OPERATOR_KEY",
-  "RECV_TOKEN_ID",
-  "RNFT_TOKEN_ID",
-  "PINATA_JWT",
-];
-
-console.log("🔍 Checking environment variables...");
-const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
-
-if (missingVars.length > 0) {
-  console.error("❌ Missing required environment variables:", missingVars);
-  console.error("💡 Please add these variables to your Railway deployment:");
-  missingVars.forEach((varName) => {
-    console.error(`   ${varName}=your_value_here`);
-  });
-  process.exit(1);
-}
+// Validate and display configuration
+config.validateConfig();
+config.displayConfig();
 
 // Hedera client setup
-const client = Client.forTestnet();
-const operatorKey = PrivateKey.fromStringECDSA(process.env.OPERATOR_KEY);
-client.setOperator(process.env.OPERATOR_ID, operatorKey);
+const client = config.hedera.isMainnet
+  ? Client.forMainnet()
+  : Client.forTestnet();
+const operatorKey = PrivateKey.fromStringECDSA(config.hedera.operatorKey);
+client.setOperator(config.hedera.operatorId, operatorKey);
 client.setDefaultMaxTransactionFee(new Hbar(100));
 
-console.log("🔧 Hedera client configured:");
-console.log("Operator ID:", process.env.OPERATOR_ID);
-console.log("RECV Token ID:", process.env.RECV_TOKEN_ID);
-console.log("rNFT Token ID:", process.env.RNFT_TOKEN_ID);
-
-// Config
-const RECV_TOKEN_ID = process.env.RECV_TOKEN_ID;
-const RNFT_TOKEN_ID = process.env.RNFT_TOKEN_ID;
+// Configuration constants
+const RECV_TOKEN_ID = config.hedera.recvTokenId;
+const RNFT_TOKEN_ID = config.hedera.rnftTokenId;
 
 // Pinata IPFS Configuration
-const PINATA_API_KEY = process.env.PINATA_API_KEY;
-const PINATA_SECRET_API_KEY = process.env.PINATA_SECRET_API_KEY;
-const PINATA_JWT = process.env.PINATA_JWT;
+const PINATA_API_KEY = config.ipfs.pinataApiKey;
+const PINATA_SECRET_API_KEY = config.ipfs.pinataSecretKey;
+const PINATA_JWT = config.ipfs.pinataJwt;
 
-console.log("🔧 Pinata configured:");
-console.log("API Key:", PINATA_API_KEY ? "✅ Loaded" : "❌ Missing");
+// Initialize database and user routes
+async function startServer() {
+  try {
+    // Initialize database
+    await initializeDatabase();
+
+    // Health check endpoint
+    app.get("/api/health", (req, res) => {
+      res.json({
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        version: "Phase 3 - NFT Integration",
+        services: {
+          database: "connected",
+          websocket: "active",
+          hedera: "configured",
+          nft: "enabled",
+        },
+      });
+    });
+
+    // Add user routes
+    app.use("/api/users", userRoutes);
+
+    // Add receipt routes
+    app.use("/api/receipts", receiptRoutes);
+
+    // Add merchant routes
+    app.use("/api/merchants", merchantRoutes);
+
+    // Add admin routes
+    const { router: adminRoutes } = require("./adminRoutes");
+    app.use("/api/admin", adminRoutes);
+
+    console.log("✅ User management system initialized");
+    console.log("✅ Receipt management system initialized");
+    console.log("✅ Merchant management system initialized");
+    console.log("✅ Admin management system initialized");
+  } catch (error) {
+    console.error("❌ Failed to initialize user system:", error);
+  }
+}
+
+// Start server initialization
+startServer();
 
 /**
  * Upload JSON data to IPFS via Pinata
@@ -311,26 +343,16 @@ app.get("/get-nfts/:accountId", async (req, res) => {
     const { accountId } = req.params;
     console.log(`🔍 Fetching NFTs for account: ${accountId}`);
 
-    // Handle both Hedera account IDs (0.0.xxxxx) and Ethereum addresses (0x...)
-    let queryAccountId = accountId;
-    
-    // If it's an Ethereum address (starts with 0x), use it directly
-    // The Hedera Mirror Node supports both formats
-    if (accountId.startsWith("0x")) {
-      console.log("📱 Detected Ethereum address, using EVM compatibility");
-      queryAccountId = accountId.toLowerCase();
-    }
-
     // Fetch account NFTs from HashScan API
     const response = await axios.get(
-      `https://testnet.mirrornode.hedera.com/api/v1/accounts/${queryAccountId}/nfts?token.id=${RNFT_TOKEN_ID}`,
+      `https://testnet.mirrornode.hedera.com/api/v1/accounts/${accountId}/nfts?token.id=${RNFT_TOKEN_ID}`,
       {
         timeout: 10000,
       }
     );
 
     const nfts = response.data.nfts || [];
-    console.log(`📊 Found ${nfts.length} NFTs for account ${queryAccountId}`);
+    console.log(`📊 Found ${nfts.length} NFTs for account ${accountId}`);
 
     // Format NFT data and fetch metadata
     const formattedNFTs = await Promise.all(
@@ -383,33 +405,32 @@ app.get("/get-nfts/:accountId", async (req, res) => {
 
     res.json({
       status: "success",
-      account: queryAccountId,
-      originalAccount: accountId,
+      account: accountId,
       count: formattedNFTs.length,
       nfts: formattedNFTs,
     });
   } catch (error) {
     console.error("❌ Error fetching NFTs:", error);
-    
-    // More detailed error logging
-    if (error.response) {
-      console.error("🔍 API Response Error:", {
-        status: error.response.status,
-        statusText: error.response.statusText,
-        data: error.response.data
-      });
-    }
-    
     res.status(500).json({
       error: error.message,
-      details: error.response?.data?.message || "Failed to fetch NFTs from Hedera network",
-      apiError: error.response?.status || null
+      details: "Failed to fetch NFTs from Hedera network",
     });
   }
 });
 
+// Import notification service
+const notificationService = require("./notificationService");
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`✅ ReciptoVerse API running on port ${PORT}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || "development"}`);
 });
+
+// Initialize WebSocket server
+notificationService.initialize(server);
+
+// Broadcast connection stats every 30 seconds
+setInterval(() => {
+  notificationService.broadcastStats();
+}, 30000);

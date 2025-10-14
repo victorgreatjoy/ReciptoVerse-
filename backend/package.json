@@ -4,7 +4,11 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "dev": "set NODE_ENV=development && nodemon src/server.js",
+    "dev:local": "set NODE_ENV=development && nodemon src/server.js",
+    "dev:cloud": "set NODE_ENV=development && set DATABASE_URL=your_cloud_db_url && nodemon src/server.js",
+    "staging": "set NODE_ENV=staging && node src/server.js",
+    "production": "set NODE_ENV=production && node src/server.js",
     "test": "node test-api.js"
   },
   "engines": {
@@ -22,10 +26,24 @@
   "dependencies": {
     "@hashgraph/sdk": "^2.73.2",
     "axios": "^1.12.2",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^2.4.3",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "form-data": "^4.0.4",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.0.2",
     "nft.storage": "^7.2.0",
-    "pinata": "^2.5.0"
+    "pg": "^8.11.3",
+    "pinata": "^2.5.0",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "sqlite3": "^5.1.6",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "nodemon": "^3.1.10"
   }
 }

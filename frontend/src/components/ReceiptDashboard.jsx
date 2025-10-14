@@ -1,0 +1,365 @@
+import { useState, useEffect, useCallback } from "react";
+import { useUser } from "../contexts/UserContext";
+import ReceiptForm from "./ReceiptForm";
+import "./ReceiptDashboard.css";
+
+const ReceiptDashboard = () => {
+  const { API_BASE } = useUser();
+  const [receipts, setReceipts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    category: "all",
+    search: "",
+    startDate: "",
+    endDate: "",
+    sortBy: "receipt_date",
+    sortOrder: "DESC",
+  });
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("reciptoverse_token");
+      const response = await fetch(`${API_BASE}/api/receipts/categories`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories);
+      }
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  }, [API_BASE]);
+
+  const fetchReceipts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("reciptoverse_token");
+
+      const queryParams = new URLSearchParams({
+        ...filters,
+        limit: 50,
+      });
+
+      const response = await fetch(`${API_BASE}/api/receipts?${queryParams}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setReceipts(data.receipts);
+      }
+    } catch (error) {
+      console.error("Failed to fetch receipts:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [API_BASE, filters]);
+
+  // Fetch categories and receipts
+  useEffect(() => {
+    fetchCategories();
+    fetchReceipts();
+  }, [fetchCategories, fetchReceipts]);
+
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const formatAmount = (amount) => {
+    return `$${parseFloat(amount).toFixed(2)}`;
+  };
+
+  const getCategoryData = (categoryId) => {
+    return (
+      categories.find((cat) => cat.id === categoryId) || {
+        name: categoryId,
+        icon: "📋",
+        color: "#6b7280",
+      }
+    );
+  };
+
+  const totalSpent = receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
+
+  return (
+    <div className="receipt-dashboard">
+      {/* Dashboard Header */}
+      <div className="dashboard-header">
+        <div className="header-content">
+          <h2>📄 Receipt Manager</h2>
+          <p>Organize and track your receipts by category</p>
+        </div>
+        <button
+          className="add-receipt-btn"
+          onClick={() => setShowAddModal(true)}
+        >
+          ➕ Add Receipt
+        </button>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="quick-stats">
+        <div className="stat-card">
+          <div className="stat-icon">📊</div>
+          <div className="stat-content">
+            <h3>{receipts.length}</h3>
+            <p>Total Receipts</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">💰</div>
+          <div className="stat-content">
+            <h3>{formatAmount(totalSpent)}</h3>
+            <p>Total Spent</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">📈</div>
+          <div className="stat-content">
+            <h3>{categories.filter((cat) => cat.count > 0).length}</h3>
+            <p>Categories Used</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Category Filter Pills */}
+      <div className="category-filters">
+        <button
+          className={`category-pill ${
+            filters.category === "all" ? "active" : ""
+          }`}
+          onClick={() => handleFilterChange("category", "all")}
+        >
+          🔍 All ({receipts.length})
+        </button>
+        {categories
+          .filter((cat) => cat.count > 0)
+          .map((category) => (
+            <button
+              key={category.id}
+              className={`category-pill ${
+                filters.category === category.id ? "active" : ""
+              }`}
+              onClick={() => handleFilterChange("category", category.id)}
+              style={{ "--category-color": category.color }}
+            >
+              {category.icon} {category.name} ({category.count})
+            </button>
+          ))}
+      </div>
+
+      {/* Search and Sort */}
+      <div className="filters-row">
+        <div className="search-box">
+          <input
+            type="text"
+            placeholder="🔍 Search receipts..."
+            value={filters.search}
+            onChange={(e) => handleFilterChange("search", e.target.value)}
+          />
+        </div>
+        <div className="date-filters">
+          <input
+            type="date"
+            value={filters.startDate}
+            onChange={(e) => handleFilterChange("startDate", e.target.value)}
+            placeholder="Start Date"
+          />
+          <input
+            type="date"
+            value={filters.endDate}
+            onChange={(e) => handleFilterChange("endDate", e.target.value)}
+            placeholder="End Date"
+          />
+        </div>
+        <select
+          value={`${filters.sortBy}-${filters.sortOrder}`}
+          onChange={(e) => {
+            const [sortBy, sortOrder] = e.target.value.split("-");
+            handleFilterChange("sortBy", sortBy);
+            handleFilterChange("sortOrder", sortOrder);
+          }}
+        >
+          <option value="receipt_date-DESC">📅 Newest First</option>
+          <option value="receipt_date-ASC">📅 Oldest First</option>
+          <option value="amount-DESC">💰 Highest Amount</option>
+          <option value="amount-ASC">💰 Lowest Amount</option>
+          <option value="store_name-ASC">🏪 Store A-Z</option>
+        </select>
+      </div>
+
+      {/* Receipts Grid */}
+      <div className="receipts-grid">
+        {loading ? (
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading receipts...</p>
+          </div>
+        ) : receipts.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📄</div>
+            <h3>No receipts found</h3>
+            <p>Start by adding your first receipt!</p>
+            <button
+              className="add-receipt-btn"
+              onClick={() => setShowAddModal(true)}
+            >
+              ➕ Add Your First Receipt
+            </button>
+          </div>
+        ) : (
+          receipts.map((receipt) => {
+            const categoryData = getCategoryData(receipt.category);
+            return (
+              <div
+                key={receipt.id}
+                className="receipt-card"
+                onClick={() => setSelectedReceipt(receipt)}
+              >
+                <div className="receipt-header">
+                  <div
+                    className="category-badge"
+                    style={{ backgroundColor: categoryData.color }}
+                  >
+                    {categoryData.icon}
+                  </div>
+                  <div className="receipt-actions">
+                    {receipt.nftCreated && (
+                      <span className="nft-badge">🎨 NFT</span>
+                    )}
+                    {receipt.isVerified && (
+                      <span className="verified-badge">✅</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="receipt-content">
+                  <h3 className="store-name">{receipt.storeName}</h3>
+                  <p className="receipt-amount">
+                    {formatAmount(receipt.amount)}
+                  </p>
+                  <p className="receipt-date">
+                    {formatDate(receipt.receiptDate)}
+                  </p>
+                  <p className="receipt-category">{categoryData.name}</p>
+
+                  {receipt.items && receipt.items.length > 0 && (
+                    <div className="receipt-items">
+                      <p className="items-count">
+                        {receipt.items.length} item
+                        {receipt.items.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Add Receipt Modal */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div
+            className="modal-content receipt-form-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3>Add New Receipt</h3>
+              <button
+                className="close-btn"
+                onClick={() => setShowAddModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <ReceiptForm
+                onSuccess={(newReceipt) => {
+                  console.log("Receipt created:", newReceipt);
+                  setShowAddModal(false);
+                  fetchReceipts(); // Refresh the list
+                }}
+                onCancel={() => setShowAddModal(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Receipt Detail Modal - Placeholder for now */}
+      {selectedReceipt && (
+        <div className="modal-overlay" onClick={() => setSelectedReceipt(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Receipt Details</h3>
+              <button
+                className="close-btn"
+                onClick={() => setSelectedReceipt(null)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="receipt-details">
+                <h4>{selectedReceipt.storeName}</h4>
+                <p>
+                  <strong>Amount:</strong>{" "}
+                  {formatAmount(selectedReceipt.amount)}
+                </p>
+                <p>
+                  <strong>Date:</strong>{" "}
+                  {formatDate(selectedReceipt.receiptDate)}
+                </p>
+                <p>
+                  <strong>Category:</strong>{" "}
+                  {getCategoryData(selectedReceipt.category).name}
+                </p>
+                {selectedReceipt.items && selectedReceipt.items.length > 0 && (
+                  <div>
+                    <strong>Items:</strong>
+                    <ul>
+                      {selectedReceipt.items.map((item, index) => (
+                        <li key={index}>
+                          {item.name} - {formatAmount(item.price)} x{" "}
+                          {item.quantity}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <button
+                className="btn-primary"
+                onClick={() => setSelectedReceipt(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ReceiptDashboard;

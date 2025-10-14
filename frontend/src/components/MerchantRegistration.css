@@ -1,0 +1,403 @@
+.merchant-registration {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem 1rem;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.registration-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.registration-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.registration-header h1 {
+  margin: 0 0 1rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.registration-header p {
+  margin: 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.registration-form {
+  padding: 2rem;
+}
+
+.form-section {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.form-section h3 {
+  color: #374151;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.form-group label {
+  display: block;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.subscription-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.plan-option {
+  display: block;
+  padding: 1.5rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.plan-option:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.plan-option.selected {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.plan-option input[type="radio"] {
+  display: none;
+}
+
+.plan-details {
+  text-align: center;
+}
+
+.plan-name {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.plan-price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.form-actions {
+  text-align: center;
+  padding-top: 2rem;
+}
+
+.submit-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.submit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.registration-info {
+  background: #f9fafb;
+  padding: 2rem;
+}
+
+.registration-info h3 {
+  color: #374151;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.registration-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.registration-info li {
+  padding: 0.5rem 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* Success Page Styles */
+.registration-success {
+  text-align: center;
+  padding: 3rem 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.registration-success h2 {
+  color: #059669;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+}
+
+.registration-success > p {
+  color: #6b7280;
+  font-size: 1.2rem;
+  margin: 0 0 2rem 0;
+}
+
+.credentials-box {
+  background: #f0f9ff;
+  border: 2px solid #0ea5e9;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem 0;
+  text-align: left;
+}
+
+.credentials-box h3 {
+  color: #0c4a6e;
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+}
+
+.credential-item {
+  margin-bottom: 1.5rem;
+}
+
+.credential-item:last-child {
+  margin-bottom: 0;
+}
+
+.credential-item label {
+  display: block;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.credential-value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.credential-value code {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem;
+  font-family: "Monaco", "Menlo", monospace;
+  font-size: 0.9rem;
+  flex: 1;
+  word-break: break-all;
+}
+
+.credential-value button {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.credential-value button:hover {
+  background: #0284c7;
+}
+
+.instructions {
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem 0;
+  text-align: left;
+}
+
+.instructions h3 {
+  color: #92400e;
+  margin: 0 0 1rem 0;
+  text-align: center;
+}
+
+.instructions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.instructions li {
+  padding: 0.5rem 0;
+  color: #78350f;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.instructions li::before {
+  content: "▸";
+  color: #f59e0b;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.primary-button,
+.secondary-button {
+  padding: 0.75rem 2rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.secondary-button {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.primary-button:hover,
+.secondary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .merchant-registration {
+    padding: 1rem;
+  }
+
+  .registration-header {
+    padding: 2rem 1rem;
+  }
+
+  .registration-header h1 {
+    font-size: 2rem;
+  }
+
+  .registration-form {
+    padding: 1.5rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-plans {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .registration-success {
+    padding: 2rem 1rem;
+  }
+
+  .credentials-box,
+  .instructions {
+    padding: 1.5rem;
+  }
+}
