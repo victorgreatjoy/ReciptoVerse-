@@ -34,7 +34,6 @@
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
     "nft.storage": "^7.2.0",
-    "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.9",
     "pg": "^8.11.3",
     "pinata": "^2.5.0",

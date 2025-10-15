@@ -1,7 +1,7 @@
 // recaptchaService.js
 // Google reCAPTCHA verification service for server-side token validation
 
-const fetch = require("node-fetch").default || require("node-fetch");
+// Note: Using built-in fetch API available in Node.js 18+
 
 /**
  * Verify reCAPTCHA token with Google's verification API
