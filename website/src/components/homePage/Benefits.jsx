@@ -33,7 +33,7 @@ const Benefits = () => {
             Core Benefits of the Ecosystem
           </h2>
           <p className="text-slate-400 mt-4 max-w-2xl mx-auto">
-            ReciptoVerse transforms everyday spending into a gateway for
+            ReceiptoVerse transforms everyday spending into a gateway for
             rewards, governance, and new digital experiences.
           </p>
         </div>

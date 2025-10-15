@@ -47,7 +47,7 @@ const TokenomicsRoadmap = () => {
               </li>
               <li className="flex items-center">
                 <CheckCircle className="text-cyan-400 mr-2" size={20} />
-                Governance rights in the ReciptoVerse DAO.
+                Governance rights in the ReceiptoVerse DAO.
               </li>
               <li className="flex items-center">
                 <CheckCircle className="text-cyan-400 mr-2" size={20} />

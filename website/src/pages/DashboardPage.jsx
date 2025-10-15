@@ -5,7 +5,7 @@ function DashboardPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white p-6">
       <h1 className="text-5xl font-bold text-blue-400 mb-4">
-        Welcome to the ReciptoVerse App!
+        Welcome to the ReceiptoVerse App!
       </h1>
       <p className="text-xl text-slate-300 mb-8">
         This is where your user dashboard will be.

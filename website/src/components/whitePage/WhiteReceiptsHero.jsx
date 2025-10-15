@@ -9,8 +9,9 @@ const WhiteReceiptsHero = () => {
           White <span className="text-cyan-400">Receipts.</span>
         </h1>
         <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto">
-          Delve into the technical and economic foundations of the ReciptoVerse.
-          Here is the blueprint for the future of commerce and value creation.
+          Delve into the technical and economic foundations of the
+          ReceiptoVerse. Here is the blueprint for the future of commerce and
+          value creation.
         </p>
       </div>
     </section>

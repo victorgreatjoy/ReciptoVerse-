@@ -9,7 +9,7 @@ const HowItWorksHero = () => {
           From Receipts to <span className="text-cyan-400">Rewards.</span>
         </h1>
         <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto">
-          ReciptoVerse is designed to be a seamless experience for everyone in
+          ReceiptoVerse is designed to be a seamless experience for everyone in
           the ecosystem—users, merchants, and developers. Discover your role in
           the new economy.
         </p>

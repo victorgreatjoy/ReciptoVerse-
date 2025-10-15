@@ -69,7 +69,7 @@ const WaitlistModal = ({ isOpen, onClose }) => {
           <p className="text-slate-400 mb-6">
             {status === "success"
               ? "Thank you for signing up! We'll notify you as soon as we launch."
-              : "Be the first to know when ReciptoVerse launches. Get exclusive updates, early access, and more."}
+              : "Be the first to know when ReceiptoVerse launches. Get exclusive updates, early access, and more."}
           </p>
         </div>
 

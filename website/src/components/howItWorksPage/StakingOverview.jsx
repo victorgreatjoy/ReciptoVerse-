@@ -11,7 +11,7 @@ const StakingOverview = () => {
           </h2>
           <p className="text-lg text-slate-400 mb-12">
             Staking RVT is more than just earning rewards; it's an investment in
-            the ReciptoVerse ecosystem, granting you influence and unlocking
+            the ReceiptoVerse ecosystem, granting you influence and unlocking
             exclusive platform privileges.
           </p>
         </div>

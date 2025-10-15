@@ -10,7 +10,7 @@ const DaoPhilosophy = () => {
           </h2>
           <div className="bg-slate-900 border border-cyan-500/30 rounded-lg p-8">
             <p className="text-xl text-slate-300 leading-relaxed">
-              We believe in a future governed by users. In the ReciptoVerse
+              We believe in a future governed by users. In the ReceiptoVerse
               ecosystem, your voice matters. By staking $RVT tokens and holding
               receipt-NFTs, you gain the power to vote on key proposals, guide
               the development of new features, and directly influence the

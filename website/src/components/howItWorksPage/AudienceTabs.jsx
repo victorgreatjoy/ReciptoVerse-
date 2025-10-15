@@ -12,7 +12,7 @@ const AudienceTabs = () => {
         {
           title: "Connect Your Wallet",
           description:
-            "Securely log in using your Web3 wallet to create your ReciptoVerse identity and dashboard.",
+            "Securely log in using your Web3 wallet to create your ReceiptoVerse identity and dashboard.",
         },
         {
           title: "Collect Digital Receipts",
@@ -74,12 +74,12 @@ const AudienceTabs = () => {
         {
           title: "Utilize our SDK & APIs",
           description:
-            "Access our comprehensive SDKs and APIs to build novel GameFi applications and tools on top of the ReciptoVerse protocol.",
+            "Access our comprehensive SDKs and APIs to build novel GameFi applications and tools on top of the ReceiptoVerse protocol.",
         },
         {
           title: "Apply for DAO Grants",
           description:
-            "Propose innovative projects to the ReciptoVerse DAO and get funding to build the future of the ecosystem.",
+            "Propose innovative projects to the ReceiptoVerse DAO and get funding to build the future of the ecosystem.",
         },
         {
           title: "Sandbox Environment",

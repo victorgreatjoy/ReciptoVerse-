@@ -58,7 +58,7 @@ const VisualInfographic = () => {
       icon: Landmark,
       title: "5. Govern the DAO",
       description:
-        "Your staked tokens and rNFTs grant you voting power in the ReciptoVerse DAO to shape the future of the ecosystem.",
+        "Your staked tokens and rNFTs grant you voting power in the ReceiptoVerse DAO to shape the future of the ecosystem.",
     },
   ];
 
@@ -66,7 +66,7 @@ const VisualInfographic = () => {
     <section className="py-20 bg-slate-900/75">
       <div className="container mx-auto px-6 text-center">
         <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
-          The ReciptoVerse Lifecycle
+          The ReceiptoVerse Lifecycle
         </h2>
         <p className="text-lg text-slate-400 max-w-3xl mx-auto mb-16">
           From a simple real-world purchase to a powerful digital asset, this is

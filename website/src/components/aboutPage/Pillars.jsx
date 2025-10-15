@@ -37,7 +37,7 @@ const Pillars = () => {
       icon: <Vote size={32} />,
       title: "DAO Governance",
       description:
-        "You, the community, shape the future of the ReciptoVerse protocol.",
+        "You, the community, shape the future of the ReceiptoVerse protocol.",
     },
   ];
 

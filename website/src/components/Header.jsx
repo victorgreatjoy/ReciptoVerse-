@@ -9,7 +9,7 @@ const Header = () => {
     <header className="bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50 border-b border-slate-800">
       <div className="container mx-auto px-6 h-20 flex justify-between items-center">
         <Link to="/" className="text-2xl font-bold text-white">
-          Recipto<span className="text-cyan-400">Verse</span>
+          Receipto<span className="text-cyan-400">Verse</span>
         </Link>
 
         {/* Desktop Navigation */}
