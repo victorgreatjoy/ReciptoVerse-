@@ -346,8 +346,9 @@ async function initializeDatabase() {
     }
 
     try {
+      const timestampType = pool ? "TIMESTAMP" : "DATETIME";
       await query(
-        "ALTER TABLE users ADD COLUMN verification_code_expires DATETIME"
+        `ALTER TABLE users ADD COLUMN verification_code_expires ${timestampType}`
       );
       console.log("✅ Added verification_code_expires column to users table");
     } catch (error) {
