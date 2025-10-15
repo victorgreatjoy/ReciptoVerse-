@@ -26,7 +26,7 @@ const UserDashboard = () => {
     return (
       <div className="dashboard-guest">
         <div className="guest-content">
-          <h2>Welcome to ReciptoVerse! 🧾✨</h2>
+          <h2>Welcome to ReceiptoVerse! 🧾✨</h2>
           <p>
             Sign in or create an account to start turning your receipts into
             valuable NFTs.

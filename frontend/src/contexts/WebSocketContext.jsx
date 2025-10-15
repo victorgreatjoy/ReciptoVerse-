@@ -27,7 +27,7 @@ export const WebSocketProvider = ({ children }) => {
       });
 
       newSocket.on("connect", () => {
-        console.log("🔌 Connected to ReciptoVerse notifications");
+        console.log("🔌 Connected to ReceiptoVerse notifications");
         setIsConnected(true);
 
         // Authenticate as user
@@ -42,7 +42,7 @@ export const WebSocketProvider = ({ children }) => {
       });
 
       newSocket.on("disconnect", () => {
-        console.log("🔌 Disconnected from ReciptoVerse notifications");
+        console.log("🔌 Disconnected from ReceiptoVerse notifications");
         setIsConnected(false);
       });
 
@@ -65,7 +65,7 @@ export const WebSocketProvider = ({ children }) => {
 
         // Show browser notification if permitted
         if (Notification.permission === "granted") {
-          new Notification("ReciptoVerse - New Receipt", {
+          new Notification("ReceiptoVerse - New Receipt", {
             body: data.message,
             icon: "/vite.svg",
             badge: "/vite.svg",

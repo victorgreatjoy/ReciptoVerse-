@@ -8,6 +8,8 @@ const {
   authenticateToken,
 } = require("./auth");
 const UserBarcodeGenerator = require("./barcodeGenerator");
+const { verifyRecaptcha } = require("./recaptchaService");
+const emailService = require("./emailService");
 
 const router = express.Router();
 
@@ -17,6 +19,7 @@ const registerSchema = Joi.object({
   password: Joi.string().min(6).required(),
   desiredHandle: Joi.string().alphanum().min(3).max(20).required(),
   displayName: Joi.string().max(100).optional(),
+  recaptchaToken: Joi.string().required(),
 });
 
 const loginSchema = Joi.object({
@@ -32,6 +35,18 @@ const updateProfileSchema = Joi.object({
   privacySettings: Joi.object().optional(),
 });
 
+const verificationSchema = Joi.object({
+  email: Joi.string().email().required(),
+  code: Joi.string()
+    .length(6)
+    .pattern(/^[0-9]+$/)
+    .required(),
+});
+
+const resendVerificationSchema = Joi.object({
+  email: Joi.string().email().required(),
+});
+
 // Register new user
 router.post("/register", async (req, res) => {
   try {
@@ -44,7 +59,25 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    const { email, password, desiredHandle, displayName } = value;
+    const { email, password, desiredHandle, displayName, recaptchaToken } =
+      value;
+
+    // Verify reCAPTCHA token
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, req.ip);
+
+    if (!recaptchaResult.success) {
+      console.warn(
+        `❌ reCAPTCHA verification failed for ${email}:`,
+        recaptchaResult["error-codes"]
+      );
+      return res.status(400).json({
+        error: "reCAPTCHA verification failed",
+        code: "RECAPTCHA_VERIFICATION_FAILED",
+        details: recaptchaResult["error-codes"],
+      });
+    }
+
+    console.log(`✅ reCAPTCHA verified for registration: ${email}`);
 
     // Check if email already exists
     const existingUser = await query("SELECT id FROM users WHERE email = ?", [
@@ -61,11 +94,15 @@ router.post("/register", async (req, res) => {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Create user
+    // Generate verification code
+    const verificationCode = emailService.generateVerificationCode();
+    const verificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Create user with verification code
     const result = await query(
       `
-      INSERT INTO users (email, password_hash, handle, display_name)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO users (email, password_hash, handle, display_name, verification_code, verification_code_expires)
+      VALUES (?, ?, ?, ?, ?, ?)
       RETURNING id, email, handle, display_name, created_at
     `,
       [
@@ -73,6 +110,8 @@ router.post("/register", async (req, res) => {
         passwordHash,
         uniqueHandle,
         displayName || uniqueHandle,
+        verificationCode,
+        verificationExpires.toISOString(),
       ]
     );
 
@@ -94,13 +133,35 @@ router.post("/register", async (req, res) => {
       // Continue with registration even if QR code fails
     }
 
-    // Generate token
-    const token = generateToken(user.id);
+    // Send verification email
+    try {
+      const emailResult = await emailService.sendVerificationCode(
+        email.toLowerCase(),
+        verificationCode,
+        user.handle
+      );
 
-    console.log(`✅ New user registered: ${user.handle} (${user.email})`);
+      if (emailResult.success) {
+        console.log(
+          `📧 Verification email sent to ${user.handle} (${user.email})`
+        );
+      } else {
+        console.log(
+          `📧 Email fallback used for ${user.handle}: ${verificationCode}`
+        );
+      }
+    } catch (emailError) {
+      console.error("Failed to send verification email:", emailError);
+      // Continue with registration even if email fails
+    }
+
+    console.log(
+      `✅ New user registered: ${user.handle} (${user.email}) - verification required`
+    );
 
     res.status(201).json({
-      message: "User registered successfully",
+      message:
+        "User registered successfully. Please check your email for verification code.",
       user: {
         id: user.id,
         email: user.email,
@@ -108,12 +169,190 @@ router.post("/register", async (req, res) => {
         displayName: user.display_name,
         createdAt: user.created_at,
         hasQRCode: true,
+        emailVerified: false,
+        requiresVerification: true,
       },
-      token,
+      // Note: No token provided until email is verified
     });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ error: "Registration failed" });
+  }
+});
+
+// Verify email with code
+router.post("/verify-email", async (req, res) => {
+  try {
+    // Validate input
+    const { error, value } = verificationSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        error: "Invalid input",
+        details: error.details[0].message,
+      });
+    }
+
+    const { email, code } = value;
+
+    // Find user with verification code
+    const result = await query(
+      "SELECT * FROM users WHERE email = ? AND verification_code = ?",
+      [email.toLowerCase(), code]
+    );
+
+    if ((result.rows || result).length === 0) {
+      // Increment failed attempts
+      await query(
+        "UPDATE users SET verification_attempts = verification_attempts + 1 WHERE email = ?",
+        [email.toLowerCase()]
+      );
+
+      return res.status(400).json({
+        error: "Invalid verification code",
+        code: "INVALID_CODE",
+      });
+    }
+
+    const user = result.rows ? result.rows[0] : result[0];
+
+    // Check if code expired
+    const now = new Date();
+    const expiresAt = new Date(user.verification_code_expires);
+
+    if (now > expiresAt) {
+      return res.status(400).json({
+        error: "Verification code has expired",
+        code: "CODE_EXPIRED",
+      });
+    }
+
+    // Check attempts limit
+    if (user.verification_attempts >= 5) {
+      return res.status(429).json({
+        error: "Too many failed attempts. Please request a new code.",
+        code: "TOO_MANY_ATTEMPTS",
+      });
+    }
+
+    // Verify user and clear verification data
+    await query(
+      `UPDATE users SET 
+       email_verified = ?, 
+       verification_code = NULL, 
+       verification_code_expires = NULL, 
+       verification_attempts = 0 
+       WHERE id = ?`,
+      [true, user.id]
+    );
+
+    // Send welcome email
+    try {
+      await emailService.sendWelcomeEmail(user.email, user.handle);
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+    }
+
+    // Generate token for verified user
+    const token = generateToken(user.id);
+
+    console.log(`✅ Email verified for user: ${user.handle} (${user.email})`);
+
+    res.json({
+      message: "Email verified successfully",
+      user: {
+        id: user.id,
+        email: user.email,
+        handle: user.handle,
+        displayName: user.display_name,
+        emailVerified: true,
+        hasQRCode: !!user.qr_code,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error("Email verification error:", error);
+    res.status(500).json({ error: "Verification failed" });
+  }
+});
+
+// Resend verification code
+router.post("/resend-verification", async (req, res) => {
+  try {
+    // Validate input
+    const { error, value } = resendVerificationSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        error: "Invalid input",
+        details: error.details[0].message,
+      });
+    }
+
+    const { email } = value;
+
+    // Find user
+    const result = await query("SELECT * FROM users WHERE email = ?", [
+      email.toLowerCase(),
+    ]);
+
+    if ((result.rows || result).length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = result.rows ? result.rows[0] : result[0];
+
+    // Check if already verified
+    if (user.email_verified) {
+      return res.status(400).json({
+        error: "Email is already verified",
+        code: "ALREADY_VERIFIED",
+      });
+    }
+
+    // Generate new verification code
+    const verificationCode = emailService.generateVerificationCode();
+    const verificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Update user with new code
+    await query(
+      `UPDATE users SET 
+       verification_code = ?, 
+       verification_code_expires = ?, 
+       verification_attempts = 0 
+       WHERE id = ?`,
+      [verificationCode, verificationExpires.toISOString(), user.id]
+    );
+
+    // Send verification email
+    try {
+      const emailResult = await emailService.sendVerificationCode(
+        email.toLowerCase(),
+        verificationCode,
+        user.handle
+      );
+
+      if (emailResult.success) {
+        console.log(
+          `📧 Verification email resent to ${user.handle} (${user.email})`
+        );
+      } else {
+        console.log(
+          `📧 Email fallback used for ${user.handle}: ${verificationCode}`
+        );
+      }
+    } catch (emailError) {
+      console.error("Failed to resend verification email:", emailError);
+      return res
+        .status(500)
+        .json({ error: "Failed to send verification email" });
+    }
+
+    res.json({
+      message: "Verification code sent successfully",
+      email: email.toLowerCase(),
+    });
+  } catch (error) {
+    console.error("Resend verification error:", error);
+    res.status(500).json({ error: "Failed to resend verification code" });
   }
 });
 
@@ -147,6 +386,16 @@ router.post("/login", async (req, res) => {
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
       return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    // Check if email is verified
+    if (!user.email_verified) {
+      return res.status(403).json({
+        error: "Please verify your email address before logging in",
+        code: "EMAIL_NOT_VERIFIED",
+        email: user.email,
+        requiresVerification: true,
+      });
     }
 
     // Update last active

@@ -21,7 +21,7 @@ export const UserProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState(
-    localStorage.getItem("reciptoverse_token")
+    localStorage.getItem("receiptoverse_token")
   );
 
   // API Configuration
@@ -47,7 +47,7 @@ export const UserProvider = ({ children }) => {
         console.log("✅ User profile loaded:", data.user.handle);
       } else {
         // Token invalid, clear it
-        localStorage.removeItem("reciptoverse_token");
+        localStorage.removeItem("receiptoverse_token");
         setToken(null);
         setUser(null);
         setIsAuthenticated(false);
@@ -70,7 +70,13 @@ export const UserProvider = ({ children }) => {
   }, [token, loadUserProfile]);
 
   // Register new user
-  const register = async (email, password, desiredHandle, displayName) => {
+  const register = async (
+    email,
+    password,
+    desiredHandle,
+    displayName,
+    recaptchaToken
+  ) => {
     try {
       setIsLoading(true);
 
@@ -84,20 +90,35 @@ export const UserProvider = ({ children }) => {
           password,
           desiredHandle,
           displayName,
+          recaptchaToken,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Store token and set user
-        localStorage.setItem("reciptoverse_token", data.token);
-        setToken(data.token);
-        setUser(data.user);
-        setIsAuthenticated(true);
+        // Check if user requires verification
+        if (data.user && data.user.requiresVerification) {
+          console.log(
+            "✅ User registered successfully - verification required:",
+            data.user.handle
+          );
+          return {
+            success: true,
+            user: data.user,
+            requiresVerification: true,
+            message: data.message,
+          };
+        } else if (data.token) {
+          // Old flow - user is immediately authenticated
+          localStorage.setItem("receiptoverse_token", data.token);
+          setToken(data.token);
+          setUser(data.user);
+          setIsAuthenticated(true);
 
-        console.log("✅ User registered successfully:", data.user.handle);
-        return { success: true, user: data.user };
+          console.log("✅ User registered successfully:", data.user.handle);
+          return { success: true, user: data.user };
+        }
       } else {
         return { success: false, error: data.error || "Registration failed" };
       }
@@ -126,7 +147,7 @@ export const UserProvider = ({ children }) => {
 
       if (response.ok) {
         // Store token and set user
-        localStorage.setItem("reciptoverse_token", data.token);
+        localStorage.setItem("receiptoverse_token", data.token);
         setToken(data.token);
         setUser(data.user);
         setIsAuthenticated(true);
@@ -134,6 +155,16 @@ export const UserProvider = ({ children }) => {
         console.log("✅ User logged in successfully:", data.user.handle);
         return { success: true, user: data.user };
       } else {
+        // Check if this is an email verification issue
+        if (data.code === "EMAIL_NOT_VERIFIED") {
+          return {
+            success: false,
+            error: data.error || "Email verification required",
+            code: data.code,
+            email: data.email,
+            requiresVerification: true,
+          };
+        }
         return { success: false, error: data.error || "Login failed" };
       }
     } catch (error) {
@@ -144,9 +175,84 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  // Verify email with code
+  const verifyEmail = async (email, code) => {
+    try {
+      setIsLoading(true);
+
+      const response = await fetch(`${API_BASE}/api/users/verify-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, code }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store token and set user after successful verification
+        localStorage.setItem("receiptoverse_token", data.token);
+        setToken(data.token);
+        setUser(data.user);
+        setIsAuthenticated(true);
+
+        console.log("✅ Email verified successfully:", data.user.handle);
+        return { success: true, user: data.user, message: data.message };
+      } else {
+        return {
+          success: false,
+          error: data.error || "Verification failed",
+          code: data.code,
+        };
+      }
+    } catch (error) {
+      console.error("Email verification error:", error);
+      return { success: false, error: "Network error. Please try again." };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Resend verification code
+  const resendVerificationCode = async (email) => {
+    try {
+      setIsLoading(true);
+
+      const response = await fetch(
+        `${API_BASE}/api/users/resend-verification`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("✅ Verification code resent to:", email);
+        return { success: true, message: data.message };
+      } else {
+        return {
+          success: false,
+          error: data.error || "Failed to resend code",
+          code: data.code,
+        };
+      }
+    } catch (error) {
+      console.error("Resend verification error:", error);
+      return { success: false, error: "Network error. Please try again." };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Logout user
   const logout = () => {
-    localStorage.removeItem("reciptoverse_token");
+    localStorage.removeItem("receiptoverse_token");
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
@@ -219,6 +325,8 @@ export const UserProvider = ({ children }) => {
     register,
     login,
     logout,
+    verifyEmail,
+    resendVerificationCode,
     updateProfile,
     getUserStats,
     refreshUser,

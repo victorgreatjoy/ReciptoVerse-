@@ -223,7 +223,7 @@ const AdminDashboard = () => {
   return (
     <div className="admin-dashboard">
       <div className="admin-header">
-        <h1>🛠️ ReciptoVerse Admin Dashboard</h1>
+        <h1>🛠️ ReceiptoVerse Admin Dashboard</h1>
         <button
           onClick={() => {
             localStorage.removeItem("adminToken");

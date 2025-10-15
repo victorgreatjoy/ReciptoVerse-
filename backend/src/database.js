@@ -114,6 +114,9 @@ async function initializeDatabase() {
         created_at TIMESTAMP DEFAULT NOW(),
         last_active TIMESTAMP DEFAULT NOW(),
         email_verified BOOLEAN DEFAULT FALSE,
+        verification_code VARCHAR(6),
+        verification_code_expires TIMESTAMP,
+        verification_attempts INTEGER DEFAULT 0,
         account_status VARCHAR(20) DEFAULT 'active',
         is_admin BOOLEAN DEFAULT FALSE,
         admin_status VARCHAR(20) DEFAULT 'none',
@@ -143,6 +146,9 @@ async function initializeDatabase() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
         email_verified BOOLEAN DEFAULT FALSE,
+        verification_code TEXT,
+        verification_code_expires DATETIME,
+        verification_attempts INTEGER DEFAULT 0,
         account_status TEXT DEFAULT 'active',
         is_admin INTEGER DEFAULT 0,
         admin_status TEXT DEFAULT 'none',
@@ -319,8 +325,63 @@ async function initializeDatabase() {
       );
     }
 
-    // Initialize default admin account (Leandro)
-    await initializeDefaultAdmin();
+    // Add email verification columns to existing users table if they don't exist
+    console.log("🔄 Checking for email verification columns...");
+
+    try {
+      await query("ALTER TABLE users ADD COLUMN verification_code TEXT");
+      console.log("✅ Added verification_code column to users table");
+    } catch (error) {
+      if (
+        error.message.includes("duplicate column name") ||
+        error.message.includes("already exists")
+      ) {
+        console.log("ℹ️ verification_code column already exists");
+      } else {
+        console.error(
+          "❌ Error adding verification_code column:",
+          error.message
+        );
+      }
+    }
+
+    try {
+      await query(
+        "ALTER TABLE users ADD COLUMN verification_code_expires DATETIME"
+      );
+      console.log("✅ Added verification_code_expires column to users table");
+    } catch (error) {
+      if (
+        error.message.includes("duplicate column name") ||
+        error.message.includes("already exists")
+      ) {
+        console.log("ℹ️ verification_code_expires column already exists");
+      } else {
+        console.error(
+          "❌ Error adding verification_code_expires column:",
+          error.message
+        );
+      }
+    }
+
+    try {
+      await query(
+        "ALTER TABLE users ADD COLUMN verification_attempts INTEGER DEFAULT 0"
+      );
+      console.log("✅ Added verification_attempts column to users table");
+    } catch (error) {
+      if (
+        error.message.includes("duplicate column name") ||
+        error.message.includes("already exists")
+      ) {
+        console.log("ℹ️ verification_attempts column already exists");
+      } else {
+        console.error(
+          "❌ Error adding verification_attempts column:",
+          error.message
+        );
+      }
+    }
 
     console.log("✅ Database tables initialized successfully");
   } catch (error) {
@@ -329,41 +390,9 @@ async function initializeDatabase() {
   }
 }
 
-// Initialize default admin account
-async function initializeDefaultAdmin() {
-  try {
-    // Check if Leandro's account exists and make it admin
-    const leandroUser = await query(
-      "SELECT * FROM users WHERE handle = ? OR email = ?",
-      ["leandromirante", "leandro@reciptoverse.com"]
-    );
-
-    if (leandroUser.length > 0) {
-      await query(
-        "UPDATE users SET is_admin = ?, admin_status = ?, admin_approved_at = ?, admin_approved_by = ? WHERE id = ?",
-        [
-          pool ? true : 1, // Boolean for PostgreSQL, integer for SQLite
-          "approved",
-          new Date().toISOString(),
-          "system",
-          leandroUser[0].id,
-        ]
-      );
-      console.log("✅ Admin privileges granted to Leandro's account");
-    } else {
-      console.log(
-        "ℹ️ Leandro's account not found - admin privileges will be granted when account is created"
-      );
-    }
-  } catch (error) {
-    console.error("❌ Error initializing default admin:", error);
-  }
-}
-
 module.exports = {
   pool,
   db,
   query,
   initializeDatabase,
-  initializeDefaultAdmin,
 };

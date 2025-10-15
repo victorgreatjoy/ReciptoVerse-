@@ -423,7 +423,7 @@ const notificationService = require("./notificationService");
 
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
-  console.log(`✅ ReciptoVerse API running on port ${PORT}`);
+  console.log(`✅ ReceiptoVerse API running on port ${PORT}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || "development"}`);
 });
 

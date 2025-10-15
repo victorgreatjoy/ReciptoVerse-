@@ -1,3 +1,8 @@
+/* Tailwind CSS directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Global Reset and Base Styles */
 * {
   margin: 0;
@@ -12,17 +17,17 @@
   line-height: 1.5;
   font-weight: 400;
 
-  /* Theme Colors */
+  /* Theme Colors - African-inspired palette */
   --primary-gradient: linear-gradient(
     135deg,
-    #667eea 0%,
-    #764ba2 50%,
-    #f093fb 100%
+    #f17316 0%,
+    #22c55e 50%,
+    #0ea5e9 100%
   );
   --glass-bg: rgba(255, 255, 255, 0.15);
   --glass-border: rgba(255, 255, 255, 0.2);
-  --text-primary: rgba(255, 255, 255, 0.9);
-  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-primary: #1c1917;
+  --text-secondary: #57534e;
 
   /* Effects */
   --blur-strong: blur(20px);
@@ -30,9 +35,9 @@
   --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.12);
   --shadow-strong: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
-  color-scheme: light dark;
+  color-scheme: light;
   color: var(--text-primary);
-  background-color: #0f0f23;
+  background-color: #fafaf9;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -51,8 +56,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background-attachment: fixed;
+  /* Background removed - now controlled by Tailwind components */
 }
 
 #root {

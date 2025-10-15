@@ -20,7 +20,7 @@ const UserQRCode = () => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem("reciptoverse_token");
+      const token = localStorage.getItem("receiptoverse_token");
       const response = await fetch(`${API_BASE}/api/users/qr-code`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -49,7 +49,7 @@ const UserQRCode = () => {
     try {
       setRegenerating(true);
 
-      const token = localStorage.getItem("reciptoverse_token");
+      const token = localStorage.getItem("receiptoverse_token");
       const response = await fetch(`${API_BASE}/api/users/regenerate-qr`, {
         method: "POST",
         headers: {
@@ -94,7 +94,7 @@ const UserQRCode = () => {
     if (qrData?.qrCode) {
       const link = document.createElement("a");
       link.href = qrData.qrCode;
-      link.download = `ReciptoVerse-QR-${user.handle}.png`;
+      link.download = `ReceiptoVerse-QR-${user.handle}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -145,7 +145,7 @@ const UserQRCode = () => {
           {qrData?.qrCode ? (
             <img
               src={qrData.qrCode}
-              alt="Your ReciptoVerse QR Code"
+              alt="Your ReceiptoVerse QR Code"
               className="qr-code-image"
             />
           ) : (
