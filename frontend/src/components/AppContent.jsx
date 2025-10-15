@@ -466,14 +466,33 @@ const AppContent = () => {
                     >
                       Create Free Account
                     </Button>
-                    <Button
+                    <button
                       onClick={() => openAuth("login")}
-                      variant="outline"
-                      size="lg"
-                      className="border-2 border-white text-white hover:bg-white hover:text-blue-600 transition-colors"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "8px 16px",
+                        fontSize: "16px",
+                        fontWeight: "500",
+                        border: "2px solid white",
+                        color: "white",
+                        backgroundColor: "transparent",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = "white";
+                        e.target.style.color = "#2563eb";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = "transparent";
+                        e.target.style.color = "white";
+                      }}
                     >
                       Sign In
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </div>
