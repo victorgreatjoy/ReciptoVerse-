@@ -81,7 +81,7 @@ class EmailService {
       console.log(`   Port: ${process.env.EMAIL_PORT}`);
       console.log(`   User: ${process.env.EMAIL_USER}`);
       console.log(`   Secure: ${process.env.EMAIL_SECURE}`);
-      
+
       this.transporter = nodemailer.createTransporter({
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT) || 587,
@@ -92,10 +92,10 @@ class EmailService {
         },
         // Add timeout and connection settings for Railway
         connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 5000,    // 5 seconds
-        socketTimeout: 15000,     // 15 seconds
-        logger: true,             // Enable detailed logging
-        debug: process.env.NODE_ENV === 'production', // Enable debug in production
+        greetingTimeout: 5000, // 5 seconds
+        socketTimeout: 15000, // 15 seconds
+        logger: true, // Enable detailed logging
+        debug: process.env.NODE_ENV === "production", // Enable debug in production
         // Gmail specific settings
         pool: true,
         maxConnections: 5,
@@ -103,9 +103,9 @@ class EmailService {
         // Additional security settings
         requireTLS: true,
         tls: {
-          ciphers: 'SSLv3',
-          rejectUnauthorized: false
-        }
+          ciphers: "SSLv3",
+          rejectUnauthorized: false,
+        },
       });
 
       // Test the connection
@@ -119,7 +119,9 @@ class EmailService {
       });
 
       this.isConfigured = true;
-      console.log("📧 Production email service configured with enhanced settings");
+      console.log(
+        "📧 Production email service configured with enhanced settings"
+      );
     } catch (error) {
       console.error("❌ Production email setup failed:", error);
       this.setupFallbackService();
@@ -157,17 +159,20 @@ class EmailService {
     const startTime = Date.now();
     console.log(`📧 [START] Sending verification email to ${email}`);
     console.log(`📧 [DEBUG] Code: ${code}, Handle: ${userHandle}`);
-    
+
     try {
       if (!this.isConfigured) {
-        console.log(`📧 [FALLBACK] Email service not configured - verification code for ${email}: ${code}`);
+        console.log(
+          `📧 [FALLBACK] Email service not configured - verification code for ${email}: ${code}`
+        );
         return { success: true, messageId: "fallback", preview: null, code };
       }
 
       console.log(`📧 [CONFIG] Service is configured, preparing email...`);
-      
+
       const mailOptions = {
-        from: process.env.EMAIL_FROM || "ReceiptoVerse <noreply@receiptoverse.com>",
+        from:
+          process.env.EMAIL_FROM || "ReceiptoVerse <noreply@receiptoverse.com>",
         to: email,
         subject: "🔐 Your ReceiptoVerse Verification Code",
         html: this.getVerificationEmailTemplate(code, userHandle),
@@ -176,21 +181,23 @@ class EmailService {
 
       console.log(`📧 [SENDING] Attempting to send email via SMTP...`);
       console.log(`📧 [TIMEOUT] Setting 20-second timeout for email send...`);
-      
+
       // Create timeout promise to prevent infinite hanging
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
-          reject(new Error('Email send timeout after 20 seconds'));
+          reject(new Error("Email send timeout after 20 seconds"));
         }, 20000);
       });
 
       const emailPromise = this.transporter.sendMail(mailOptions);
-      
+
       // Race between email send and timeout
       const info = await Promise.race([emailPromise, timeoutPromise]);
-      
+
       const duration = Date.now() - startTime;
-      console.log(`📧 [SUCCESS] Email sent in ${duration}ms (ID: ${info.messageId})`);
+      console.log(
+        `📧 [SUCCESS] Email sent in ${duration}ms (ID: ${info.messageId})`
+      );
 
       const previewUrl = nodemailer.getTestMessageUrl(info);
       console.log(`📧 [CODE] Verification code: ${code}`);
@@ -206,17 +213,24 @@ class EmailService {
       };
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(`❌ [FAILED] Email send failed after ${duration}ms:`, error);
+      console.error(
+        `❌ [FAILED] Email send failed after ${duration}ms:`,
+        error
+      );
       console.error(`❌ [ERROR_TYPE] ${error.name}: ${error.message}`);
-      console.error(`❌ [ERROR_CODE] ${error.code || 'NO_CODE'}`);
-      
+      console.error(`❌ [ERROR_CODE] ${error.code || "NO_CODE"}`);
+
       // Check specific error types
-      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION') {
-        console.log(`📧 [NETWORK] Network/timeout error detected - this is common on Railway`);
-      } else if (error.code === 'EAUTH') {
+      if (error.code === "ETIMEDOUT" || error.code === "ECONNECTION") {
+        console.log(
+          `📧 [NETWORK] Network/timeout error detected - this is common on Railway`
+        );
+      } else if (error.code === "EAUTH") {
         console.log(`📧 [AUTH] Authentication error - check Gmail credentials`);
-      } else if (error.message.includes('timeout')) {
-        console.log(`📧 [TIMEOUT] Custom timeout triggered - SMTP took too long`);
+      } else if (error.message.includes("timeout")) {
+        console.log(
+          `📧 [TIMEOUT] Custom timeout triggered - SMTP took too long`
+        );
       }
 
       // Fallback to console logging
@@ -228,10 +242,7 @@ class EmailService {
         fallback: true,
         code, // Include code for fallback scenarios
         errorCode: error.code,
-        duration
-      };
-    }
-  }
+        duration,
       };
     }
   }
