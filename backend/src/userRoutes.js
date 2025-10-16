@@ -324,8 +324,10 @@ router.post("/resend-verification", async (req, res) => {
 
     // Send verification email
     try {
-      console.log(`📧 Attempting to send verification email to ${email.toLowerCase()}`);
-      
+      console.log(
+        `📧 Attempting to send verification email to ${email.toLowerCase()}`
+      );
+
       const emailResult = await emailService.sendVerificationCode(
         email.toLowerCase(),
         verificationCode,
@@ -348,10 +350,9 @@ router.post("/resend-verification", async (req, res) => {
         email: email.toLowerCase(),
         fallback: emailResult.fallback || false,
       });
-      
     } catch (emailError) {
       console.error("Failed to resend verification email:", emailError);
-      
+
       // Still return the code for development/testing
       res.json({
         message: "Verification code generated (email service unavailable)",

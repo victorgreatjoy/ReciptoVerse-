@@ -262,7 +262,11 @@ const EmailVerification = ({
                   disabled={isResending}
                   className="text-sm text-primary-600 hover:text-primary-500 font-medium transition-colors disabled:opacity-50"
                 >
-                  {isResending ? "Sending..." : hasResent ? "Resend Code" : "Resend Code"}
+                  {isResending
+                    ? "Sending..."
+                    : hasResent
+                    ? "Resend Code"
+                    : "Resend Code"}
                 </button>
               )}
             </div>
