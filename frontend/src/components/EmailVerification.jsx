@@ -26,31 +26,34 @@ const EmailVerification = ({
   ]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes
-  const [canResend, setCanResend] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60); // 1 minute
+  const [canResend, setCanResend] = useState(true); // Allow first resend immediately
+  const [hasResent, setHasResent] = useState(false); // Track if user has resent at least once
 
   useEffect(() => {
-    if (timeLeft > 0) {
+    // Only start timer if we've already resent once
+    if (timeLeft > 0 && hasResent && !canResend) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
-    } else {
+    } else if (timeLeft === 0 && hasResent) {
       setCanResend(true);
       // Show a helpful message when the timer runs out
-      if (isOpen && timeLeft === 0) {
+      if (isOpen) {
         showToast.info(
-          "Verification code expired. You can now request a new one.",
-          "Code Expired"
+          "You can now request a new verification code.",
+          "Timer Expired"
         );
       }
     }
-  }, [timeLeft, isOpen]);
+  }, [timeLeft, isOpen, hasResent, canResend]);
 
   useEffect(() => {
     // Reset when component opens
     if (isOpen) {
       setVerificationCode(["", "", "", "", "", ""]);
-      setTimeLeft(120);
-      setCanResend(false);
+      setTimeLeft(60); // 1 minute
+      setCanResend(true); // Allow immediate first resend
+      setHasResent(false); // Reset resend tracking
     }
   }, [isOpen]);
 
@@ -165,8 +168,9 @@ const EmailVerification = ({
 
       if (result?.success) {
         showToast.success("Verification code sent to your email");
-        setTimeLeft(120);
+        setTimeLeft(60); // 1 minute countdown
         setCanResend(false);
+        setHasResent(true); // Mark that user has resent, this will start the timer
         setVerificationCode(["", "", "", "", "", ""]);
       } else {
         showToast.error(result?.error || "Failed to resend code");
@@ -248,7 +252,7 @@ const EmailVerification = ({
             </Button>
 
             <div className="text-center">
-              {!canResend ? (
+              {!canResend && hasResent ? (
                 <p className="text-sm text-earth-600">
                   Resend code in {formatTime(timeLeft)}
                 </p>
@@ -258,7 +262,7 @@ const EmailVerification = ({
                   disabled={isResending}
                   className="text-sm text-primary-600 hover:text-primary-500 font-medium transition-colors disabled:opacity-50"
                 >
-                  {isResending ? "Sending..." : "Resend Code"}
+                  {isResending ? "Sending..." : hasResent ? "Resend Code" : "Resend Code"}
                 </button>
               )}
             </div>

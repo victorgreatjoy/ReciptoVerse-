@@ -4,6 +4,17 @@
 
 Add these to your Railway deployment:
 
+### Email Configuration (CRITICAL for production)
+
+```
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=leandro.mirantexd@gmail.com
+EMAIL_PASS=owno rsht xbyo dkhq
+EMAIL_FROM=ReceiptoVerse <leandro.mirantexd@gmail.com>
+```
+
 ### Hedera Configuration
 
 ```
@@ -50,10 +61,16 @@ PORT=3000
 ## Quick Copy-Paste for Railway:
 
 ```
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=leandro.mirantexd@gmail.com
+EMAIL_PASS=owno rsht xbyo dkhq
+EMAIL_FROM=ReceiptoVerse <leandro.mirantexd@gmail.com>
 OPERATOR_ID=0.0.6913837
 OPERATOR_KEY=YOUR_ACTUAL_PRIVATE_KEY_HERE
 RECV_TOKEN_ID=0.0.6922722
-RNFT_TOKEN_ID=0.0.6922732
+RNFT_TOKEN_ID=0.0.6927730
 PINATA_API_KEY=YOUR_PINATA_API_KEY
 PINATA_SECRET_API_KEY=YOUR_PINATA_SECRET
 PINATA_JWT=YOUR_PINATA_JWT_TOKEN

@@ -135,6 +135,11 @@ export const UserProvider = ({ children }) => {
     try {
       setIsLoading(true);
 
+      console.log("🔍 API_BASE:", API_BASE);
+      console.log("🔍 Attempting login to:", `${API_BASE}/api/users/login`);
+      console.log("🔍 Environment mode:", import.meta.env.MODE);
+      console.log("🔍 Is production:", import.meta.env.PROD);
+
       const response = await fetch(`${API_BASE}/api/users/login`, {
         method: "POST",
         headers: {
