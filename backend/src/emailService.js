@@ -1,18 +1,7 @@
 // emailService.js
 // Email service for user verification and notifications
-      this.transporter = nodemailer.createTransporter({
-        host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT) || 587,
-        secure: process.env.EMAIL_SECURE === "true",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-        // Add timeout configurations for Railway production
-        connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 5000,    // 5 seconds
-        socketTimeout: 15000,     // 15 seconds
-      });odemailer = require("nodemailer");
+
+const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 
 /**
@@ -98,7 +87,7 @@ class EmailService {
       });
 
       this.isConfigured = true;
-      console.log("📧 Production email service configured with timeouts");
+      console.log("📧 Production email service configured");
     } catch (error) {
       console.error("❌ Production email setup failed:", error);
       this.setupFallbackService();
