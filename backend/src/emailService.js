@@ -76,7 +76,13 @@ class EmailService {
    */
   setupProductionEmail() {
     try {
-      this.transporter = nodemailer.createTransport({
+      console.log("📧 Setting up production email with configuration:");
+      console.log(`   Host: ${process.env.EMAIL_HOST}`);
+      console.log(`   Port: ${process.env.EMAIL_PORT}`);
+      console.log(`   User: ${process.env.EMAIL_USER}`);
+      console.log(`   Secure: ${process.env.EMAIL_SECURE}`);
+      
+      this.transporter = nodemailer.createTransporter({
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT) || 587,
         secure: process.env.EMAIL_SECURE === "true",
@@ -84,10 +90,36 @@ class EmailService {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
         },
+        // Add timeout and connection settings for Railway
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 5000,    // 5 seconds
+        socketTimeout: 15000,     // 15 seconds
+        logger: true,             // Enable detailed logging
+        debug: process.env.NODE_ENV === 'production', // Enable debug in production
+        // Gmail specific settings
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        // Additional security settings
+        requireTLS: true,
+        tls: {
+          ciphers: 'SSLv3',
+          rejectUnauthorized: false
+        }
+      });
+
+      // Test the connection
+      this.transporter.verify((error, success) => {
+        if (error) {
+          console.error("❌ SMTP connection verification failed:", error);
+          this.setupFallbackService();
+        } else {
+          console.log("✅ SMTP connection verified successfully");
+        }
       });
 
       this.isConfigured = true;
-      console.log("📧 Production email service configured");
+      console.log("📧 Production email service configured with enhanced settings");
     } catch (error) {
       console.error("❌ Production email setup failed:", error);
       this.setupFallbackService();
@@ -119,34 +151,51 @@ class EmailService {
   }
 
   /**
-   * Send email verification code
+   * Send email verification code with enhanced logging and timeout protection
    */
   async sendVerificationCode(email, code, userHandle) {
+    const startTime = Date.now();
+    console.log(`📧 [START] Sending verification email to ${email}`);
+    console.log(`📧 [DEBUG] Code: ${code}, Handle: ${userHandle}`);
+    
     try {
       if (!this.isConfigured) {
-        console.log(`📧 [FALLBACK] Verification code for ${email}: ${code}`);
-        return { success: true, messageId: "fallback", preview: null };
+        console.log(`📧 [FALLBACK] Email service not configured - verification code for ${email}: ${code}`);
+        return { success: true, messageId: "fallback", preview: null, code };
       }
 
+      console.log(`📧 [CONFIG] Service is configured, preparing email...`);
+      
       const mailOptions = {
-        from:
-          process.env.EMAIL_FROM || "ReceiptoVerse <noreply@receiptoverse.com>",
+        from: process.env.EMAIL_FROM || "ReceiptoVerse <noreply@receiptoverse.com>",
         to: email,
         subject: "🔐 Your ReceiptoVerse Verification Code",
         html: this.getVerificationEmailTemplate(code, userHandle),
         text: `Hi ${userHandle},\n\nYour ReceiptoVerse verification code is: ${code}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, please ignore this email.\n\nBest regards,\nThe ReceiptoVerse Team`,
       };
 
-      const info = await this.transporter.sendMail(mailOptions);
+      console.log(`📧 [SENDING] Attempting to send email via SMTP...`);
+      console.log(`📧 [TIMEOUT] Setting 20-second timeout for email send...`);
+      
+      // Create timeout promise to prevent infinite hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Email send timeout after 20 seconds'));
+        }, 20000);
+      });
+
+      const emailPromise = this.transporter.sendMail(mailOptions);
+      
+      // Race between email send and timeout
+      const info = await Promise.race([emailPromise, timeoutPromise]);
+      
+      const duration = Date.now() - startTime;
+      console.log(`📧 [SUCCESS] Email sent in ${duration}ms (ID: ${info.messageId})`);
 
       const previewUrl = nodemailer.getTestMessageUrl(info);
-
-      console.log(
-        `📧 Verification email sent to ${email} (ID: ${info.messageId})`
-      );
-      console.log(`📧 Verification code: ${code}`);
+      console.log(`📧 [CODE] Verification code: ${code}`);
       if (previewUrl) {
-        console.log(`📧 Preview email at: ${previewUrl}`);
+        console.log(`📧 [PREVIEW] Email preview: ${previewUrl}`);
       }
 
       return {
@@ -156,7 +205,19 @@ class EmailService {
         code, // Always include code for development
       };
     } catch (error) {
-      console.error("❌ Failed to send verification email:", error);
+      const duration = Date.now() - startTime;
+      console.error(`❌ [FAILED] Email send failed after ${duration}ms:`, error);
+      console.error(`❌ [ERROR_TYPE] ${error.name}: ${error.message}`);
+      console.error(`❌ [ERROR_CODE] ${error.code || 'NO_CODE'}`);
+      
+      // Check specific error types
+      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION') {
+        console.log(`📧 [NETWORK] Network/timeout error detected - this is common on Railway`);
+      } else if (error.code === 'EAUTH') {
+        console.log(`📧 [AUTH] Authentication error - check Gmail credentials`);
+      } else if (error.message.includes('timeout')) {
+        console.log(`📧 [TIMEOUT] Custom timeout triggered - SMTP took too long`);
+      }
 
       // Fallback to console logging
       console.log(`📧 [FALLBACK] Verification code for ${email}: ${code}`);
@@ -166,6 +227,11 @@ class EmailService {
         error: error.message,
         fallback: true,
         code, // Include code for fallback scenarios
+        errorCode: error.code,
+        duration
+      };
+    }
+  }
       };
     }
   }
