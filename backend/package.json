@@ -25,6 +25,7 @@
   "description": "ReciptoVerse Backend API for Receipt NFTs",
   "dependencies": {
     "@hashgraph/sdk": "^2.73.2",
+    "@sendgrid/mail": "^8.1.6",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
@@ -35,7 +36,6 @@
     "jsonwebtoken": "^9.0.2",
     "nft.storage": "^7.2.0",
     "nodemailer": "^7.0.9",
-    "@sendgrid/mail": "^8.1.3",
     "pg": "^8.11.3",
     "pinata": "^2.5.0",
     "qrcode": "^1.5.4",
