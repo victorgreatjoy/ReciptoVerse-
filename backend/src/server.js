@@ -43,6 +43,33 @@ app.use((req, res, next) => {
   }
 });
 
+// Debug endpoint to check environment variables (REMOVE IN PRODUCTION)
+app.get("/api/debug/env", (req, res) => {
+  const emailVars = {
+    EMAIL_HOST: process.env.EMAIL_HOST || "NOT SET",
+    EMAIL_USER: process.env.EMAIL_USER || "NOT SET",
+    EMAIL_PASS: process.env.EMAIL_PASS
+      ? "***" + process.env.EMAIL_PASS.slice(-4)
+      : "NOT SET",
+    EMAIL_PORT: process.env.EMAIL_PORT || "NOT SET",
+    EMAIL_FROM: process.env.EMAIL_FROM || "NOT SET",
+    EMAIL_SECURE: process.env.EMAIL_SECURE || "NOT SET",
+    NODE_ENV: process.env.NODE_ENV || "NOT SET",
+  };
+
+  const allEmailVars = Object.keys(process.env).filter((key) =>
+    key.startsWith("EMAIL_")
+  );
+
+  res.json({
+    message: "Environment Variables Debug",
+    emailVariables: emailVars,
+    emailVarKeys: allEmailVars,
+    totalEnvVars: Object.keys(process.env).length,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Validate and display configuration
 config.validateConfig();
 config.displayConfig();

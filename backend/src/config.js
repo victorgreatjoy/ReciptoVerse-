@@ -20,8 +20,30 @@ class EnvironmentConfig {
       require("dotenv").config({ path: envPath });
       console.log(`🎯 Loaded environment: ${this.environment}`);
       console.log(`📄 Config file: ${envFile}`);
+
+      // Debug email variables after loading
+      console.log(`🔍 Email vars after config load:`);
+      console.log(
+        `   EMAIL_HOST: ${process.env.EMAIL_HOST ? "SET" : "NOT SET"}`
+      );
+      console.log(
+        `   EMAIL_USER: ${process.env.EMAIL_USER ? "SET" : "NOT SET"}`
+      );
+      console.log(
+        `   EMAIL_PASS: ${process.env.EMAIL_PASS ? "SET" : "NOT SET"}`
+      );
     } catch (error) {
       console.log(`⚠️  Could not load ${envFile}, using default .env`);
+      console.log(`🔍 Email vars after fallback:`);
+      console.log(
+        `   EMAIL_HOST: ${process.env.EMAIL_HOST ? "SET" : "NOT SET"}`
+      );
+      console.log(
+        `   EMAIL_USER: ${process.env.EMAIL_USER ? "SET" : "NOT SET"}`
+      );
+      console.log(
+        `   EMAIL_PASS: ${process.env.EMAIL_PASS ? "SET" : "NOT SET"}`
+      );
     }
   }
 

@@ -19,6 +19,40 @@ class EmailService {
    */
   initializeTransporter() {
     try {
+      console.log("📧 [DEBUG] Checking email environment variables...");
+      console.log(
+        `📧 [DEBUG] EMAIL_HOST: ${process.env.EMAIL_HOST || "NOT SET"}`
+      );
+      console.log(
+        `📧 [DEBUG] EMAIL_USER: ${process.env.EMAIL_USER || "NOT SET"}`
+      );
+      console.log(
+        `📧 [DEBUG] EMAIL_PASS: ${
+          process.env.EMAIL_PASS
+            ? "***" + process.env.EMAIL_PASS.slice(-4)
+            : "NOT SET"
+        }`
+      );
+      console.log(
+        `📧 [DEBUG] EMAIL_PORT: ${process.env.EMAIL_PORT || "NOT SET"}`
+      );
+      console.log(
+        `📧 [DEBUG] EMAIL_FROM: ${process.env.EMAIL_FROM || "NOT SET"}`
+      );
+      console.log(
+        `📧 [DEBUG] EMAIL_SECURE: ${process.env.EMAIL_SECURE || "NOT SET"}`
+      );
+      console.log(`📧 [DEBUG] NODE_ENV: ${process.env.NODE_ENV}`);
+
+      // Show all environment variables that start with EMAIL_
+      const emailVars = Object.keys(process.env).filter((key) =>
+        key.startsWith("EMAIL_")
+      );
+      console.log(
+        `📧 [DEBUG] Found ${emailVars.length} EMAIL_ environment variables:`,
+        emailVars
+      );
+
       // Check if we have real email credentials
       if (
         process.env.EMAIL_HOST &&
@@ -35,6 +69,9 @@ class EmailService {
         );
         this.setupDevelopmentEmail();
       } else {
+        console.log(
+          "📧 No email credentials found in production, using fallback service..."
+        );
         this.setupFallbackService();
       }
     } catch (error) {
