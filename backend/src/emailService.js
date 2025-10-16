@@ -122,46 +122,54 @@ class EmailService {
       console.log(`   User: ${process.env.EMAIL_USER}`);
       console.log(`   Secure: ${process.env.EMAIL_SECURE}`);
 
+      // Try Gmail SSL port 465 first (often works better on cloud platforms)
+      console.log("📧 Attempting Gmail SSL connection (port 465)...");
+
       this.transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT) || 587,
-        secure: process.env.EMAIL_SECURE === "true",
+        port: 465, // Use SSL port instead of STARTTLS
+        secure: true, // Use SSL
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
         },
-        // Add timeout and connection settings for Railway
-        connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 5000, // 5 seconds
-        socketTimeout: 15000, // 15 seconds
-        logger: true, // Enable detailed logging
-        debug: process.env.NODE_ENV === "production", // Enable debug in production
-        // Gmail specific settings
+        // Reduced timeouts for faster fallback
+        connectionTimeout: 8000, // 8 seconds
+        greetingTimeout: 4000, // 4 seconds
+        socketTimeout: 12000, // 12 seconds
+        logger: true,
+        debug: process.env.NODE_ENV === "production",
         pool: true,
-        maxConnections: 5,
-        maxMessages: 100,
-        // Additional security settings
-        requireTLS: true,
+        maxConnections: 3,
+        maxMessages: 50,
         tls: {
-          ciphers: "SSLv3",
           rejectUnauthorized: false,
         },
       });
 
-      // Test the connection
-      this.transporter.verify((error, success) => {
-        if (error) {
-          console.error("❌ SMTP connection verification failed:", error);
-          this.setupFallbackService();
-        } else {
-          console.log("✅ SMTP connection verified successfully");
+      // Test the connection with timeout
+      console.log("📧 Testing SMTP connection...");
+      const testStart = Date.now();
+
+      setTimeout(() => {
+        if (this.transporter) {
+          this.transporter.verify((error, success) => {
+            const duration = Date.now() - testStart;
+            if (error) {
+              console.error(
+                `❌ SMTP verification failed after ${duration}ms:`,
+                error.message
+              );
+              console.log("⚠️ Continuing with fallback-enabled service");
+            } else {
+              console.log(`✅ SMTP connection verified in ${duration}ms`);
+            }
+          });
         }
-      });
+      }, 100);
 
       this.isConfigured = true;
-      console.log(
-        "📧 Production email service configured with enhanced settings"
-      );
+      console.log("📧 Production email service configured (SSL port 465)");
     } catch (error) {
       console.error("❌ Production email setup failed:", error);
       this.setupFallbackService();
