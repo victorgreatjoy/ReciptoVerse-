@@ -18,6 +18,9 @@ class EmailService {
    * Initialize email transporter based on environment
    */
   initializeTransporter() {
+    console.log("🚨🚨🚨 EMAIL SERVICE INITIALIZATION STARTING 🚨🚨🚨");
+    console.log("=".repeat(60));
+
     try {
       console.log("📧 [DEBUG] Checking email environment variables...");
       console.log(
