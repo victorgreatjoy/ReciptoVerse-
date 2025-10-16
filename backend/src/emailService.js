@@ -1,10 +1,31 @@
 // emailService.js
-// Email service for user verification and notifications
+// Email service for user verification and notifications  setupProductionEmail() {
+    try {
+      this.transporter = nodemailer.createTransporter({
+        host: process.env.EMAIL_HOST,
+        port: parseInt(process.env.EMAIL_PORT) || 587,
+        secure: process.env.EMAIL_SECURE === "true",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+        // Add timeout and connection limits for Railway
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 5000, // 5 seconds
+        socketTimeout: 15000, // 15 seconds
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+      });
 
-const nodemailer = require("nodemailer");
-const crypto = require("crypto");
-
-/**
+      this.isConfigured = true;
+      console.log("📧 Production email service configured with timeouts");
+    } catch (error) {
+      console.error("❌ Production email setup failed:", error);
+      this.setupFallbackService();
+    }
+  }
+}
  * Email service configuration and utilities
  */
 class EmailService {
@@ -119,7 +140,7 @@ class EmailService {
   }
 
   /**
-   * Send email verification code
+   * Send email verification code with timeout
    */
   async sendVerificationCode(email, code, userHandle) {
     try {
@@ -137,7 +158,13 @@ class EmailService {
         text: `Hi ${userHandle},\n\nYour ReceiptoVerse verification code is: ${code}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, please ignore this email.\n\nBest regards,\nThe ReceiptoVerse Team`,
       };
 
-      const info = await this.transporter.sendMail(mailOptions);
+      // Add timeout wrapper for Railway
+      const emailPromise = this.transporter.sendMail(mailOptions);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Email timeout after 20 seconds')), 20000);
+      });
+
+      const info = await Promise.race([emailPromise, timeoutPromise]);
 
       const previewUrl = nodemailer.getTestMessageUrl(info);
 
