@@ -83,7 +83,6 @@ class EmailService {
         console.log(
           "📧 Development mode, setting up test email service..."
         );
-        );
         this.setupDevelopmentEmail();
       } else {
         console.log(
@@ -348,10 +347,11 @@ class EmailService {
     console.log(`📧 [SMTP] Attempting to send email via SMTP...`);
     console.log(`📧 [TIMEOUT] Setting 20-second timeout for email send...`);
 
-    // Create timeout promise to prevent infinite hanging
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(new Error("Email send timeout after 20 seconds"));
+    try {
+      // Create timeout promise to prevent infinite hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Email send timeout after 20 seconds"));
         }, 20000);
       });
 
@@ -576,11 +576,15 @@ class EmailService {
         return { success: false, error: "Email service not configured" };
       }
 
+      if (this.emailProvider === 'sendgrid') {
+        return { success: true, provider: 'sendgrid' };
+      }
+
       await this.transporter.verify();
       console.log("📧 Email service connection test successful");
-      return { success: true };
+      return { success: true, provider: 'smtp' };
     } catch (error) {
-      console.error("❌ Email service connection test failed:", error);
+      console.error("❌ Email connection test failed:", error);
       return { success: false, error: error.message };
     }
   }
