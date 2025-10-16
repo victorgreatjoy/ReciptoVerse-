@@ -1,6 +1,5 @@
 // emailService.js
-// Email service for user verification and notifications  setupProductionEmail() {
-    try {
+// Email service for user verification and notifications
       this.transporter = nodemailer.createTransporter({
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT) || 587,
@@ -9,23 +8,14 @@
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
         },
-        // Add timeout and connection limits for Railway
+        // Add timeout configurations for Railway production
         connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 5000, // 5 seconds
-        socketTimeout: 15000, // 15 seconds
-        pool: true,
-        maxConnections: 5,
-        maxMessages: 100,
-      });
+        greetingTimeout: 5000,    // 5 seconds
+        socketTimeout: 15000,     // 15 seconds
+      });odemailer = require("nodemailer");
+const crypto = require("crypto");
 
-      this.isConfigured = true;
-      console.log("📧 Production email service configured with timeouts");
-    } catch (error) {
-      console.error("❌ Production email setup failed:", error);
-      this.setupFallbackService();
-    }
-  }
-}
+/**
  * Email service configuration and utilities
  */
 class EmailService {
@@ -108,7 +98,7 @@ class EmailService {
       });
 
       this.isConfigured = true;
-      console.log("📧 Production email service configured");
+      console.log("📧 Production email service configured with timeouts");
     } catch (error) {
       console.error("❌ Production email setup failed:", error);
       this.setupFallbackService();
@@ -140,7 +130,7 @@ class EmailService {
   }
 
   /**
-   * Send email verification code with timeout
+   * Send email verification code
    */
   async sendVerificationCode(email, code, userHandle) {
     try {
@@ -158,13 +148,7 @@ class EmailService {
         text: `Hi ${userHandle},\n\nYour ReceiptoVerse verification code is: ${code}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, please ignore this email.\n\nBest regards,\nThe ReceiptoVerse Team`,
       };
 
-      // Add timeout wrapper for Railway
-      const emailPromise = this.transporter.sendMail(mailOptions);
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Email timeout after 20 seconds')), 20000);
-      });
-
-      const info = await Promise.race([emailPromise, timeoutPromise]);
+      const info = await this.transporter.sendMail(mailOptions);
 
       const previewUrl = nodemailer.getTestMessageUrl(info);
 
