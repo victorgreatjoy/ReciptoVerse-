@@ -4,6 +4,14 @@
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 
+// Try to load SendGrid - it might not be installed yet
+let sgMail = null;
+try {
+  sgMail = require('@sendgrid/mail');
+} catch (error) {
+  console.log("📧 SendGrid not installed, using nodemailer only");
+}
+
 /**
  * Email service configuration and utilities
  */
@@ -11,6 +19,7 @@ class EmailService {
   constructor() {
     this.transporter = null;
     this.isConfigured = false;
+    this.emailProvider = null; // 'sendgrid', 'smtp', or 'fallback'
     this.initializeTransporter();
   }
 
@@ -23,6 +32,9 @@ class EmailService {
 
     try {
       console.log("📧 [DEBUG] Checking email environment variables...");
+      console.log(
+        `📧 [DEBUG] SENDGRID_API_KEY: ${process.env.SENDGRID_API_KEY ? 'SET' : 'NOT SET'}`
+      );
       console.log(
         `📧 [DEBUG] EMAIL_HOST: ${process.env.EMAIL_HOST || "NOT SET"}`
       );
@@ -37,38 +49,40 @@ class EmailService {
         }`
       );
       console.log(
-        `📧 [DEBUG] EMAIL_PORT: ${process.env.EMAIL_PORT || "NOT SET"}`
-      );
-      console.log(
         `📧 [DEBUG] EMAIL_FROM: ${process.env.EMAIL_FROM || "NOT SET"}`
-      );
-      console.log(
-        `📧 [DEBUG] EMAIL_SECURE: ${process.env.EMAIL_SECURE || "NOT SET"}`
       );
       console.log(`📧 [DEBUG] NODE_ENV: ${process.env.NODE_ENV}`);
 
-      // Show all environment variables that start with EMAIL_
+      // Show all environment variables that start with EMAIL_ or SENDGRID_
       const emailVars = Object.keys(process.env).filter((key) =>
-        key.startsWith("EMAIL_")
+        key.startsWith("EMAIL_") || key.startsWith("SENDGRID_")
       );
       console.log(
-        `📧 [DEBUG] Found ${emailVars.length} EMAIL_ environment variables:`,
+        `📧 [DEBUG] Found ${emailVars.length} email environment variables:`,
         emailVars
       );
 
-      // Check if we have real email credentials
-      if (
+      // Priority 1: Try SendGrid (best for Railway)
+      if (process.env.SENDGRID_API_KEY && sgMail) {
+        console.log("📧 SendGrid API key found, setting up SendGrid service...");
+        this.setupSendGridEmail();
+      }
+      // Priority 2: Try SMTP (Gmail, etc.)
+      else if (
         process.env.EMAIL_HOST &&
         process.env.EMAIL_USER &&
         process.env.EMAIL_PASS
       ) {
         console.log(
-          "📧 Real email credentials found, setting up production email service..."
+          "📧 SMTP credentials found, setting up SMTP email service..."
         );
         this.setupProductionEmail();
-      } else if (process.env.NODE_ENV === "development") {
+      } 
+      // Priority 3: Development mode
+      else if (process.env.NODE_ENV === "development") {
         console.log(
-          "📧 No email credentials found, setting up development email service..."
+          "📧 Development mode, setting up test email service..."
+        );
         );
         this.setupDevelopmentEmail();
       } else {
@@ -108,6 +122,46 @@ class EmailService {
     } catch (error) {
       console.error("❌ Development email setup failed:", error);
       this.setupFallbackService();
+    }
+  }
+
+  /**
+   * Setup SendGrid email service (preferred for Railway)
+   */
+  setupSendGridEmail() {
+    try {
+      console.log("📧 Setting up SendGrid email service...");
+      console.log(`📧 API Key: ***${process.env.SENDGRID_API_KEY.slice(-4)}`);
+      
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      
+      this.isConfigured = true;
+      this.emailProvider = 'sendgrid';
+      console.log("✅ SendGrid email service configured successfully");
+      
+      // Test the API key
+      this.testSendGridConnection();
+      
+    } catch (error) {
+      console.error("❌ SendGrid setup failed:", error);
+      console.log("📧 Falling back to SMTP...");
+      this.setupProductionEmail();
+    }
+  }
+
+  /**
+   * Test SendGrid connection
+   */
+  async testSendGridConnection() {
+    try {
+      // SendGrid doesn't have a "test" endpoint, so we'll just verify the API key format
+      if (process.env.SENDGRID_API_KEY.startsWith('SG.')) {
+        console.log("✅ SendGrid API key format is valid");
+      } else {
+        console.log("⚠️ SendGrid API key format looks unusual");
+      }
+    } catch (error) {
+      console.error("❌ SendGrid connection test failed:", error);
     }
   }
 
@@ -206,7 +260,7 @@ class EmailService {
   async sendVerificationCode(email, code, userHandle) {
     const startTime = Date.now();
     console.log(`📧 [START] Sending verification email to ${email}`);
-    console.log(`📧 [DEBUG] Code: ${code}, Handle: ${userHandle}`);
+    console.log(`📧 [DEBUG] Code: ${code}, Handle: ${userHandle}, Provider: ${this.emailProvider}`);
 
     try {
       if (!this.isConfigured) {
@@ -216,24 +270,88 @@ class EmailService {
         return { success: true, messageId: "fallback", preview: null, code };
       }
 
-      console.log(`📧 [CONFIG] Service is configured, preparing email...`);
+      console.log(`📧 [CONFIG] Service is configured (${this.emailProvider}), preparing email...`);
 
-      const mailOptions = {
-        from:
-          process.env.EMAIL_FROM || "ReceiptoVerse <noreply@receiptoverse.com>",
-        to: email,
-        subject: "🔐 Your ReceiptoVerse Verification Code",
-        html: this.getVerificationEmailTemplate(code, userHandle),
-        text: `Hi ${userHandle},\n\nYour ReceiptoVerse verification code is: ${code}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, please ignore this email.\n\nBest regards,\nThe ReceiptoVerse Team`,
+      // Use SendGrid if configured
+      if (this.emailProvider === 'sendgrid') {
+        return await this.sendViaSendGrid(email, code, userHandle, startTime);
+      }
+      
+      // Use SMTP (nodemailer) as fallback
+      return await this.sendViaSMTP(email, code, userHandle, startTime);
+      
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(`❌ [FAILED] Email send failed after ${duration}ms:`, error);
+      
+      // Fallback to console logging
+      console.log(`📧 [FALLBACK] Verification code for ${email}: ${code}`);
+
+      return {
+        success: false,
+        error: error.message,
+        fallback: true,
+        code,
+        errorCode: error.code,
+        duration
       };
+    }
+  }
 
-      console.log(`📧 [SENDING] Attempting to send email via SMTP...`);
-      console.log(`📧 [TIMEOUT] Setting 20-second timeout for email send...`);
+  /**
+   * Send email via SendGrid
+   */
+  async sendViaSendGrid(email, code, userHandle, startTime) {
+    console.log(`📧 [SENDGRID] Sending email via SendGrid API...`);
+    
+    const msg = {
+      to: email,
+      from: process.env.EMAIL_FROM || 'ReceiptoVerse <noreply@receiptoverse.com>',
+      subject: '🔐 Your ReceiptoVerse Verification Code',
+      html: this.getVerificationEmailTemplate(code, userHandle),
+      text: `Hi ${userHandle},\n\nYour ReceiptoVerse verification code is: ${code}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, please ignore this email.\n\nBest regards,\nThe ReceiptoVerse Team`,
+    };
 
-      // Create timeout promise to prevent infinite hanging
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error("Email send timeout after 20 seconds"));
+    try {
+      const response = await sgMail.send(msg);
+      const duration = Date.now() - startTime;
+      
+      console.log(`📧 [SUCCESS] SendGrid email sent in ${duration}ms`);
+      console.log(`📧 [CODE] Verification code: ${code}`);
+      
+      return {
+        success: true,
+        messageId: response[0].headers['x-message-id'],
+        provider: 'sendgrid',
+        code,
+        duration
+      };
+      
+    } catch (error) {
+      console.error(`❌ [SENDGRID] SendGrid API error:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send email via SMTP (nodemailer)
+   */
+  async sendViaSMTP(email, code, userHandle, startTime) {
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || "ReceiptoVerse <noreply@receiptoverse.com>",
+      to: email,
+      subject: "🔐 Your ReceiptoVerse Verification Code",
+      html: this.getVerificationEmailTemplate(code, userHandle),
+      text: `Hi ${userHandle},\n\nYour ReceiptoVerse verification code is: ${code}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, please ignore this email.\n\nBest regards,\nThe ReceiptoVerse Team`,
+    };
+
+    console.log(`📧 [SMTP] Attempting to send email via SMTP...`);
+    console.log(`📧 [TIMEOUT] Setting 20-second timeout for email send...`);
+
+    // Create timeout promise to prevent infinite hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error("Email send timeout after 20 seconds"));
         }, 20000);
       });
 
