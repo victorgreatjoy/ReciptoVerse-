@@ -362,47 +362,59 @@ router.get("/admin-requests", authenticateAdmin, async (req, res) => {
 });
 
 // Merchant action routes
-router.post("/approve-merchant/:merchantId", authenticateAdmin, async (req, res) => {
-  try {
-    const { merchantId } = req.params;
-    await db.query(
-      "UPDATE merchants SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [merchantId]
-    );
-    res.json({ success: true, message: "Merchant approved successfully" });
-  } catch (error) {
-    console.error("Error approving merchant:", error);
-    res.status(500).json({ error: "Failed to approve merchant" });
+router.post(
+  "/approve-merchant/:merchantId",
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { merchantId } = req.params;
+      await query(
+        "UPDATE merchants SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        [merchantId]
+      );
+      res.json({ success: true, message: "Merchant approved successfully" });
+    } catch (error) {
+      console.error("Error approving merchant:", error);
+      res.status(500).json({ error: "Failed to approve merchant" });
+    }
   }
-});
+);
 
-router.post("/reject-merchant/:merchantId", authenticateAdmin, async (req, res) => {
-  try {
-    const { merchantId } = req.params;
-    await db.query(
-      "UPDATE merchants SET status = 'rejected', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [merchantId]
-    );
-    res.json({ success: true, message: "Merchant rejected successfully" });
-  } catch (error) {
-    console.error("Error rejecting merchant:", error);
-    res.status(500).json({ error: "Failed to reject merchant" });
+router.post(
+  "/reject-merchant/:merchantId",
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { merchantId } = req.params;
+      await query(
+        "UPDATE merchants SET status = 'rejected', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        [merchantId]
+      );
+      res.json({ success: true, message: "Merchant rejected successfully" });
+    } catch (error) {
+      console.error("Error rejecting merchant:", error);
+      res.status(500).json({ error: "Failed to reject merchant" });
+    }
   }
-});
+);
 
-router.post("/suspend-merchant/:merchantId", authenticateAdmin, async (req, res) => {
-  try {
-    const { merchantId } = req.params;
-    await db.query(
-      "UPDATE merchants SET status = 'suspended', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [merchantId]
-    );
-    res.json({ success: true, message: "Merchant suspended successfully" });
-  } catch (error) {
-    console.error("Error suspending merchant:", error);
-    res.status(500).json({ error: "Failed to suspend merchant" });
+router.post(
+  "/suspend-merchant/:merchantId",
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { merchantId } = req.params;
+      await query(
+        "UPDATE merchants SET status = 'suspended', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        [merchantId]
+      );
+      res.json({ success: true, message: "Merchant suspended successfully" });
+    } catch (error) {
+      console.error("Error suspending merchant:", error);
+      res.status(500).json({ error: "Failed to suspend merchant" });
+    }
   }
-});
+);
 
 // Request admin privileges (for users) - DISABLED until database migration
 router.post("/request-admin", async (req, res) => {
