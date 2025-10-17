@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useUser } from "../contexts/UserContext";
 import "./MerchantPOS.css";
 
 const MerchantPOS = () => {
-  const [apiKey, setApiKey] = useState("");
+  const { user, API_BASE } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [merchantData, setMerchantData] = useState(null);
   const [currentStep, setCurrentStep] = useState("scan"); // scan, items, payment, success
@@ -33,22 +34,18 @@ const MerchantPOS = () => {
   const paymentMethods = ["cash", "card", "digital_wallet", "other"];
 
   useEffect(() => {
-    const savedApiKey = localStorage.getItem("merchantApiKey");
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-      authenticateWithApiKey(savedApiKey);
+    // Check if user is an approved merchant
+    if (user?.isMerchant && user?.merchantApiKey) {
+      authenticateWithApiKey(user.merchantApiKey);
     }
-  }, []);
+  }, [user]);
 
   const authenticateWithApiKey = async (key) => {
     try {
       setLoading(true);
-      const response = await fetch(
-        "http://localhost:3000/api/merchants/profile",
-        {
-          headers: { "X-API-Key": key },
-        }
-      );
+      const response = await fetch(`${API_BASE}/api/merchants/profile`, {
+        headers: { "X-API-Key": key },
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -66,14 +63,6 @@ const MerchantPOS = () => {
     }
   };
 
-  const handleApiKeySubmit = (e) => {
-    e.preventDefault();
-    if (apiKey.trim()) {
-      localStorage.setItem("merchantApiKey", apiKey.trim());
-      authenticateWithApiKey(apiKey.trim());
-    }
-  };
-
   const handleScanQR = async () => {
     if (!qrInput.trim()) {
       setError("Please enter QR code data");
@@ -84,17 +73,14 @@ const MerchantPOS = () => {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        "http://localhost:3000/api/merchants/pos/scan-qr",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": apiKey,
-          },
-          body: JSON.stringify({ qrCode: qrInput }),
-        }
-      );
+      const response = await fetch(`${API_BASE}/api/merchants/pos/scan-qr`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": user.merchantApiKey,
+        },
+        body: JSON.stringify({ qrCode: qrInput }),
+      });
 
       const data = await response.json();
 
@@ -158,12 +144,12 @@ const MerchantPOS = () => {
       setError("");
 
       const response = await fetch(
-        "http://localhost:3000/api/merchants/pos/create-receipt",
+        `${API_BASE}/api/merchants/pos/create-receipt`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-API-Key": apiKey,
+            "X-API-Key": user.merchantApiKey,
           },
           body: JSON.stringify({
             customerId: scannedCustomer.id,
@@ -209,42 +195,74 @@ const MerchantPOS = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("merchantApiKey");
-    setApiKey("");
     setIsAuthenticated(false);
     setMerchantData(null);
     startNewTransaction();
   };
 
-  // API Key Input Screen
-  if (!isAuthenticated) {
+  // Check if user is not a merchant
+  if (!user?.isMerchant) {
     return (
       <div className="merchant-pos">
         <div className="pos-login">
           <div className="login-header">
             <h1>🏪 Merchant POS System</h1>
-            <p>Enter your API key to access the point of sale system</p>
+            <p>You need to be an approved merchant to access the POS system</p>
           </div>
+          <div className="info-box">
+            <p>To become a merchant:</p>
+            <ol style={{ textAlign: "left", marginTop: "1rem" }}>
+              <li>Go to the "Be a Merchant" tab</li>
+              <li>Fill out the merchant application form</li>
+              <li>Wait for admin approval</li>
+              <li>Once approved, you can access the POS system</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-          <form onSubmit={handleApiKeySubmit} className="login-form">
-            <div className="form-group">
-              <label htmlFor="apiKey">API Key</label>
-              <input
-                type="password"
-                id="apiKey"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="rpto_xxxxxxxxxxxxxxxxxx"
-                required
-              />
-            </div>
+  // Loading merchant data
+  if (!isAuthenticated && loading) {
+    return (
+      <div className="merchant-pos">
+        <div className="pos-login">
+          <div className="login-header">
+            <h1>🏪 Merchant POS System</h1>
+            <p>⏳ Loading merchant data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-            {error && <div className="error-message">❌ {error}</div>}
+  // Error loading merchant data
+  if (!isAuthenticated && error) {
+    return (
+      <div className="merchant-pos">
+        <div className="pos-login">
+          <div className="login-header">
+            <h1>🏪 Merchant POS System</h1>
+            <p style={{ color: "#e74c3c" }}>❌ {error}</p>
+          </div>
+          <div className="info-box">
+            <p>Please contact support if this issue persists.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-            <button type="submit" disabled={loading} className="login-button">
-              {loading ? "⏳ Authenticating..." : "🔑 Access POS"}
-            </button>
-          </form>
+  // Wait for merchant data to load
+  if (!merchantData) {
+    return (
+      <div className="merchant-pos">
+        <div className="pos-login">
+          <div className="login-header">
+            <h1>🏪 Merchant POS System</h1>
+            <p>⏳ Loading merchant data...</p>
+          </div>
         </div>
       </div>
     );
@@ -254,15 +272,15 @@ const MerchantPOS = () => {
     <div className="merchant-pos">
       <div className="pos-header">
         <div className="merchant-info">
-          <h1>🏪 {merchantData.business_name}</h1>
+          <h1>🏪 {merchantData?.business_name || "Merchant POS"}</h1>
           <div className="terminal-id">
-            Terminal: {merchantData.terminal_id}
+            Terminal: {merchantData?.terminal_id || "N/A"}
           </div>
         </div>
         <div className="usage-info">
           <div className="receipt-counter">
-            {merchantData.receipts_processed} / {merchantData.receipt_limit}{" "}
-            receipts
+            {merchantData?.receipts_processed || 0} /{" "}
+            {merchantData?.receipt_limit || 0} receipts
           </div>
           <button onClick={handleLogout} className="logout-btn">
             🚪 Logout

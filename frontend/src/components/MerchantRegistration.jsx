@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useUser } from "../contexts/UserContext";
 import "./MerchantRegistration.css";
 
 const MerchantRegistration = () => {
-  const { API_BASE } = useUser();
+  const { API_BASE, user, token } = useUser();
   const [formData, setFormData] = useState({
     businessName: "",
     businessType: "",
-    email: "",
     phone: "",
     address: "",
     city: "",
@@ -21,8 +20,38 @@ const MerchantRegistration = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(null);
+  const [merchantStatus, setMerchantStatus] = useState(null); // 'pending', 'approved', 'rejected'
   const [error, setError] = useState("");
+
+  // Check if user already has a merchant application
+  useEffect(() => {
+    console.log("🔍 MerchantRegistration - Auth status:", {
+      hasUser: !!user,
+      hasToken: !!token,
+      userEmail: user?.email,
+    });
+
+    const checkMerchantStatus = async () => {
+      if (!user || !token) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/merchants/status`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setMerchantStatus(data.status);
+        }
+      } catch (error) {
+        console.error("Failed to check merchant status:", error);
+      }
+    };
+
+    checkMerchantStatus();
+  }, [API_BASE, user, token]);
 
   const businessTypes = [
     "Restaurant & Food Service",
@@ -63,6 +92,12 @@ const MerchantRegistration = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!user || !token) {
+      setError("Please login to register as a merchant");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -71,18 +106,21 @@ const MerchantRegistration = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          email: user.email, // Use logged-in user's email
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess(data);
+        setMerchantStatus("pending");
         setFormData({
           businessName: "",
           businessType: "",
-          email: "",
           phone: "",
           address: "",
           city: "",
@@ -104,70 +142,83 @@ const MerchantRegistration = () => {
     }
   };
 
-  if (success) {
+  // Show application status if merchant application exists
+  if (merchantStatus) {
     return (
       <div className="merchant-registration">
         <div className="registration-success">
-          <div className="success-icon">✅</div>
-          <h2>Registration Successful!</h2>
-          <p>Your merchant account has been submitted for approval.</p>
-
-          <div className="credentials-box">
-            <h3>🔑 Your Merchant Credentials</h3>
-            <div className="credential-item">
-              <label>Terminal ID:</label>
-              <div className="credential-value">
-                <code>{success.merchant.terminalId}</code>
-                <button
-                  onClick={() =>
-                    navigator.clipboard.writeText(success.merchant.terminalId)
-                  }
-                >
-                  📋 Copy
-                </button>
+          {merchantStatus === "pending" && (
+            <>
+              <div className="success-icon">⏳</div>
+              <h2>Application Under Review</h2>
+              <p>
+                Your merchant account application is being reviewed by our admin
+                team.
+              </p>
+              <div className="status-box pending">
+                <h3>� Application Status</h3>
+                <p className="status-badge">Pending Approval</p>
+                <p>
+                  We'll notify you via email once your application is reviewed.
+                </p>
               </div>
-            </div>
-            <div className="credential-item">
-              <label>API Key:</label>
-              <div className="credential-value">
-                <code>{success.merchant.apiKey}</code>
-                <button
-                  onClick={() =>
-                    navigator.clipboard.writeText(success.merchant.apiKey)
-                  }
-                >
-                  📋 Copy
-                </button>
+            </>
+          )}
+
+          {merchantStatus === "approved" && (
+            <>
+              <div className="success-icon">✅</div>
+              <h2>Merchant Account Approved!</h2>
+              <p>
+                Your merchant account has been approved. You can now access the
+                POS system.
+              </p>
+              <div className="status-box approved">
+                <h3>🎉 Congratulations!</h3>
+                <p className="status-badge success">Approved</p>
+                <p>
+                  You can now start issuing digital receipts to your customers.
+                </p>
               </div>
-            </div>
-          </div>
+            </>
+          )}
 
-          <div className="instructions">
-            <h3>📋 Next Steps:</h3>
-            <ul>
-              {success.instructions.map((instruction, index) => (
-                <li key={index}>{instruction}</li>
-              ))}
-            </ul>
-          </div>
+          {merchantStatus === "rejected" && (
+            <>
+              <div className="success-icon">❌</div>
+              <h2>Application Rejected</h2>
+              <p>Unfortunately, your merchant application was not approved.</p>
+              <div className="status-box rejected">
+                <h3>Application Status</h3>
+                <p className="status-badge error">Rejected</p>
+                <p>
+                  Please contact support for more information or to reapply.
+                </p>
+              </div>
+              <button
+                onClick={() => setMerchantStatus(null)}
+                className="primary-button"
+                style={{ marginTop: "20px" }}
+              >
+                Apply Again
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
-          <div className="actions">
-            <button
-              onClick={() => setSuccess(null)}
-              className="secondary-button"
-            >
-              Register Another Merchant
-            </button>
-            <button
-              className="primary-button"
-              onClick={() => {
-                // Store API key for dashboard access
-                localStorage.setItem("merchantApiKey", success.merchant.apiKey);
-                window.location.href = "#dashboard";
-              }}
-            >
-              Go to Dashboard
-            </button>
+  // Show login prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="merchant-registration">
+        <div className="registration-container">
+          <div className="registration-header">
+            <h1>🏪 Merchant Registration</h1>
+            <p style={{ color: "#e74c3c", fontWeight: "bold" }}>
+              Please login to register as a merchant
+            </p>
           </div>
         </div>
       </div>
@@ -220,31 +271,16 @@ const MerchantRegistration = () => {
               </select>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="email">Business Email *</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="business@example.com"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="phone">Phone Number</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
+            <div className="form-group">
+              <label htmlFor="phone">Phone Number</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder="+1 (555) 123-4567"
+              />
             </div>
           </div>
 

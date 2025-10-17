@@ -271,7 +271,7 @@ const AppContent = () => {
               <div className="bg-white border-b border-earth-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="flex space-x-8 overflow-x-auto">
-                    {localStorage.getItem("merchantApiKey") && (
+                    {user?.isMerchant && (
                       <button
                         className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
                           currentView === "merchant-dashboard"
@@ -333,16 +333,18 @@ const AppContent = () => {
                     >
                       🏪 Be a Merchant
                     </button>
-                    <button
-                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                        currentView === "pos"
-                          ? "border-primary-500 text-primary-600"
-                          : "border-transparent text-earth-500 hover:text-earth-700 hover:border-earth-300"
-                      }`}
-                      onClick={() => setCurrentView("pos")}
-                    >
-                      💳 POS System
-                    </button>
+                    {user?.isMerchant && (
+                      <button
+                        className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
+                          currentView === "pos"
+                            ? "border-primary-500 text-primary-600"
+                            : "border-transparent text-earth-500 hover:text-earth-700 hover:border-earth-300"
+                        }`}
+                        onClick={() => setCurrentView("pos")}
+                      >
+                        💳 POS System
+                      </button>
+                    )}
                     <button
                       className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
                         currentView === "admin"

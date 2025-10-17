@@ -1,81 +1,64 @@
 import React, { useState, useEffect } from "react";
+import { useUser } from "../contexts/UserContext";
 import "./MerchantDashboard.css";
 
 const MerchantDashboard = () => {
+  const { user, API_BASE } = useUser();
   const [merchantData, setMerchantData] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [apiKey, setApiKey] = useState("");
 
   useEffect(() => {
-    const savedApiKey = localStorage.getItem("merchantApiKey");
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-      fetchMerchantData(savedApiKey);
+    const fetchMerchantData = async (key) => {
+      try {
+        setLoading(true);
+        setError("");
+
+        // Fetch merchant profile
+        const profileResponse = await fetch(
+          `${API_BASE}/api/merchants/profile`,
+          {
+            headers: {
+              "X-API-Key": key,
+            },
+          }
+        );
+
+        if (!profileResponse.ok) {
+          throw new Error("Invalid API key or merchant not approved");
+        }
+
+        const profileData = await profileResponse.json();
+        setMerchantData(profileData.merchant);
+
+        // Fetch merchant statistics
+        const statsResponse = await fetch(`${API_BASE}/api/merchants/stats`, {
+          headers: {
+            "X-API-Key": key,
+          },
+        });
+
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          setStats(statsData);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.merchantApiKey) {
+      fetchMerchantData(user.merchantApiKey);
     } else {
       setLoading(false);
-    }
-  }, []);
-
-  const fetchMerchantData = async (key) => {
-    try {
-      setLoading(true);
-      setError("");
-
-      // Fetch merchant profile
-      const profileResponse = await fetch(
-        "http://localhost:3000/api/merchants/profile",
-        {
-          headers: {
-            "X-API-Key": key,
-          },
-        }
+      setError(
+        "No merchant API key found. Please register as a merchant first."
       );
-
-      if (!profileResponse.ok) {
-        throw new Error("Invalid API key or merchant not approved");
-      }
-
-      const profileData = await profileResponse.json();
-      setMerchantData(profileData.merchant);
-
-      // Fetch merchant statistics
-      const statsResponse = await fetch(
-        "http://localhost:3000/api/merchants/stats",
-        {
-          headers: {
-            "X-API-Key": key,
-          },
-        }
-      );
-
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        setStats(statsData);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const handleApiKeySubmit = (e) => {
-    e.preventDefault();
-    if (apiKey.trim()) {
-      localStorage.setItem("merchantApiKey", apiKey.trim());
-      fetchMerchantData(apiKey.trim());
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("merchantApiKey");
-    setApiKey("");
-    setMerchantData(null);
-    setStats(null);
-    setError("");
-  };
+  }, [user, API_BASE]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("en-US", {
@@ -91,44 +74,6 @@ const MerchantDashboard = () => {
       day: "numeric",
     });
   };
-
-  // API Key Input Form
-  if (!merchantData && !loading) {
-    return (
-      <div className="merchant-dashboard">
-        <div className="api-key-form">
-          <div className="form-header">
-            <h2>🏪 Merchant Dashboard</h2>
-            <p>Enter your API key to access your merchant dashboard</p>
-          </div>
-
-          <form onSubmit={handleApiKeySubmit}>
-            <div className="form-group">
-              <label htmlFor="apiKey">Merchant API Key</label>
-              <input
-                type="password"
-                id="apiKey"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="rpto_xxxxxxxxxxxxxxxxxx"
-                required
-              />
-            </div>
-
-            {error && <div className="error-message">❌ {error}</div>}
-
-            <button type="submit" className="submit-button">
-              🔑 Access Dashboard
-            </button>
-          </form>
-
-          <div className="help-text">
-            <p>Don't have an API key? Register as a merchant first!</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -147,9 +92,9 @@ const MerchantDashboard = () => {
         <div className="error-state">
           <h2>❌ Access Error</h2>
           <p>{error}</p>
-          <button onClick={handleLogout} className="retry-button">
-            Try Different API Key
-          </button>
+          <p className="help-text">
+            Please register as a merchant from the "Be a Merchant" tab first.
+          </p>
         </div>
       </div>
     );
@@ -174,9 +119,6 @@ const MerchantDashboard = () => {
             <label>Terminal ID:</label>
             <code>{merchantData.terminal_id}</code>
           </div>
-          <button onClick={handleLogout} className="logout-button">
-            🚪 Logout
-          </button>
         </div>
       </div>
 

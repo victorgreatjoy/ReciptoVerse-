@@ -325,6 +325,7 @@ export const UserProvider = ({ children }) => {
     user,
     isAuthenticated,
     isLoading,
+    token,
 
     // Actions
     register,

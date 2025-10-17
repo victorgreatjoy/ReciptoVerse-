@@ -384,6 +384,29 @@ async function initializeDatabase() {
       }
     }
 
+    // Add user_id column to merchants table for linking merchants to users
+    console.log("🔄 Checking for user_id column in merchants table...");
+    try {
+      await query(
+        isPostgreSQL
+          ? "ALTER TABLE merchants ADD COLUMN user_id UUID REFERENCES users(id)"
+          : "ALTER TABLE merchants ADD COLUMN user_id TEXT REFERENCES users(id)"
+      );
+      console.log("✅ Added user_id column to merchants table");
+    } catch (error) {
+      if (
+        error.message.includes("duplicate column name") ||
+        error.message.includes("already exists")
+      ) {
+        console.log("ℹ️ user_id column already exists in merchants table");
+      } else {
+        console.error(
+          "❌ Error adding user_id column to merchants:",
+          error.message
+        );
+      }
+    }
+
     console.log("✅ Database tables initialized successfully");
   } catch (error) {
     console.error("❌ Database initialization error:", error);

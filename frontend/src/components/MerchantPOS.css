@@ -90,6 +90,32 @@
   cursor: not-allowed;
 }
 
+.info-box {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-top: 2rem;
+  min-width: 400px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  color: #374151;
+}
+
+.info-box p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 500;
+}
+
+.info-box ol {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.info-box li {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
 /* Main POS Interface */
 .pos-header {
   background: rgba(255, 255, 255, 0.1);

@@ -124,44 +124,6 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="quick-actions">
-        <h3>Quick Actions</h3>
-        <div className="actions-grid">
-          <button className="action-btn primary">
-            <span className="action-icon">📱</span>
-            <div>
-              <h4>Scan Receipt</h4>
-              <p>Use your camera to capture receipts</p>
-            </div>
-          </button>
-
-          <button className="action-btn secondary">
-            <span className="action-icon">✏️</span>
-            <div>
-              <h4>Manual Entry</h4>
-              <p>Add receipt details manually</p>
-            </div>
-          </button>
-
-          <button className="action-btn success">
-            <span className="action-icon">🎨</span>
-            <div>
-              <h4>Create NFT</h4>
-              <p>Turn receipts into unique NFTs</p>
-            </div>
-          </button>
-
-          <button className="action-btn info">
-            <span className="action-icon">🏛️</span>
-            <div>
-              <h4>DAO Voting</h4>
-              <p>Participate in community decisions</p>
-            </div>
-          </button>
-        </div>
-      </div>
-
       {/* Recent Activity */}
       <div className="recent-activity">
         <h3>Recent Activity</h3>

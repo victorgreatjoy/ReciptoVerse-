@@ -85,6 +85,22 @@ router.post("/register", async (req, res) => {
       subscriptionPlan = "basic",
     } = req.body;
 
+    // Get user ID if authenticated
+    const token = req.headers.authorization?.split(" ")[1];
+    let userId = null;
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(
+          token,
+          process.env.JWT_SECRET || "your-secret-key"
+        );
+        userId = decoded.userId;
+      } catch (err) {
+        console.log("Token verification failed, proceeding without user link");
+      }
+    }
+
     // Validate required fields
     if (!businessName || !businessType || !email || !contactPerson) {
       return res.status(400).json({
@@ -93,7 +109,22 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // Check if merchant already exists
+    // Check if merchant already exists for this user
+    if (userId) {
+      const existingUserMerchant = await query(
+        "SELECT id FROM merchants WHERE user_id = ?",
+        [userId]
+      );
+
+      if (existingUserMerchant.rows.length > 0) {
+        return res.status(409).json({
+          error: "Merchant already exists",
+          message: "You already have a merchant application submitted",
+        });
+      }
+    }
+
+    // Check if merchant already exists with email
     const existingMerchant = await query(
       "SELECT id FROM merchants WHERE email = ?",
       [email]
@@ -109,14 +140,14 @@ router.post("/register", async (req, res) => {
     // Generate credentials
     const { terminalId, apiKey } = generateMerchantCredentials(businessName);
 
-    // Insert new merchant
+    // Insert new merchant with user_id
     const result = await query(
       `
       INSERT INTO merchants (
         business_name, business_type, email, phone, address, city, state, 
         postal_code, country, tax_id, website_url, contact_person, 
-        api_key, terminal_id, subscription_plan, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+        api_key, terminal_id, subscription_plan, status, user_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
       ${query.pool ? "RETURNING id, business_name, terminal_id, status" : ""}
     `,
       [
@@ -135,6 +166,7 @@ router.post("/register", async (req, res) => {
         apiKey,
         terminalId,
         subscriptionPlan,
+        userId,
       ]
     );
 
@@ -172,6 +204,35 @@ router.post("/register", async (req, res) => {
       error: "Registration failed",
       message: "Unable to process merchant registration",
     });
+  }
+});
+
+// Get merchant status for logged-in user
+router.get("/status", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const result = await query(
+      "SELECT status, business_name, created_at FROM merchants WHERE user_id = ?",
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        status: null,
+        message: "No merchant application found",
+      });
+    }
+
+    const merchant = result.rows[0];
+    res.json({
+      status: merchant.status,
+      businessName: merchant.business_name,
+      appliedAt: merchant.created_at,
+    });
+  } catch (error) {
+    console.error("Error fetching merchant status:", error);
+    res.status(500).json({ error: "Failed to fetch merchant status" });
   }
 });
 

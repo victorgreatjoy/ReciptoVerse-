@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "../contexts/UserContext";
-import ReceiptForm from "./ReceiptForm";
 import { LoadingSpinner } from "./ui";
 import "./ReceiptDashboard.css";
 
 // Updated: Oct 17, 2025 - Enhanced UI/UX
 const ReceiptDashboard = () => {
-  const { API_BASE } = useUser();
+  const { API_BASE, token } = useUser();
   const [receipts, setReceipts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,12 +17,10 @@ const ReceiptDashboard = () => {
     sortBy: "receipt_date",
     sortOrder: "DESC",
   });
-  const [showAddModal, setShowAddModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
 
   const fetchCategories = useCallback(async () => {
     try {
-      const token = localStorage.getItem("ReceiptoVerse_token");
       const response = await fetch(`${API_BASE}/api/receipts/categories`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -38,35 +35,49 @@ const ReceiptDashboard = () => {
     } catch (error) {
       console.error("Failed to fetch categories:", error);
     }
-  }, [API_BASE]);
+  }, [API_BASE, token]);
 
   const fetchReceipts = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("ReceiptoVerse_token");
 
       const queryParams = new URLSearchParams({
         ...filters,
         limit: 50,
       });
 
-      const response = await fetch(`${API_BASE}/api/receipts?${queryParams}`, {
+      const url = `${API_BASE}/api/receipts?${queryParams}`;
+      console.log("📄 Fetching receipts from:", url);
+      console.log("🔑 Token:", token ? "Present" : "Missing");
+
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
+      console.log("📡 Response status:", response.status);
+
       if (response.ok) {
         const data = await response.json();
-        setReceipts(data.receipts);
+        console.log("📊 Receipts data:", data);
+        console.log("📝 Number of receipts:", data.receipts?.length || 0);
+        setReceipts(data.receipts || []);
+      } else {
+        const errorData = await response.text();
+        console.error(
+          "❌ Failed to fetch receipts:",
+          response.status,
+          errorData
+        );
       }
     } catch (error) {
-      console.error("Failed to fetch receipts:", error);
+      console.error("❌ Error fetching receipts:", error);
     } finally {
       setLoading(false);
     }
-  }, [API_BASE, filters]);
+  }, [API_BASE, filters, token]);
 
   // Fetch categories and receipts
   useEffect(() => {
@@ -106,15 +117,9 @@ const ReceiptDashboard = () => {
       {/* Dashboard Header */}
       <div className="dashboard-header">
         <div className="header-content">
-          <h2>📄 Receipt Manager</h2>
-          <p>Organize and track your receipts by category [UI Enhanced ✨]</p>
+          <h2>📄 My Receipts</h2>
+          <p>View receipts received from merchants</p>
         </div>
-        <button
-          className="add-receipt-btn"
-          onClick={() => setShowAddModal(true)}
-        >
-          ➕ Add Receipt
-        </button>
       </div>
 
       {/* Quick Stats */}
@@ -228,14 +233,13 @@ const ReceiptDashboard = () => {
         ) : receipts.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📄</div>
-            <h3>No receipts found</h3>
-            <p>Start by adding your first receipt!</p>
-            <button
-              className="add-receipt-btn"
-              onClick={() => setShowAddModal(true)}
-            >
-              ➕ Add Your First Receipt
-            </button>
+            <h3>No receipts yet</h3>
+            <p>
+              Receipts from merchants will appear here when you make purchases!
+            </p>
+            <p className="empty-hint">
+              💡 Show your QR code at checkout to receive digital receipts
+            </p>
           </div>
         ) : (
           receipts.map((receipt) => {
@@ -287,36 +291,6 @@ const ReceiptDashboard = () => {
           })
         )}
       </div>
-
-      {/* Add Receipt Modal */}
-      {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div
-            className="modal-content receipt-form-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h3>Add New Receipt</h3>
-              <button
-                className="close-btn"
-                onClick={() => setShowAddModal(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <ReceiptForm
-                onSuccess={(newReceipt) => {
-                  console.log("Receipt created:", newReceipt);
-                  setShowAddModal(false);
-                  fetchReceipts(); // Refresh the list
-                }}
-                onCancel={() => setShowAddModal(false)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Receipt Detail Modal - Placeholder for now */}
       {selectedReceipt && (
