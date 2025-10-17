@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { useUser } from "../contexts/UserContext";
 import "./MerchantRegistration.css";
 
 const MerchantRegistration = () => {
+  const { API_BASE } = useUser();
   const [formData, setFormData] = useState({
     businessName: "",
     businessType: "",
@@ -65,16 +67,13 @@ const MerchantRegistration = () => {
     setError("");
 
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/merchants/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const response = await fetch(`${API_BASE}/api/merchants/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
       const data = await response.json();
 
