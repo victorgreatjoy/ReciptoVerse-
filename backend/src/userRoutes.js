@@ -445,6 +445,15 @@ router.post("/login", async (req, res) => {
 router.get("/profile", authenticateToken, async (req, res) => {
   try {
     const user = req.user;
+    
+    // Check if user has an approved merchant account
+    const merchantResult = await query(
+      "SELECT id, business_name, terminal_id, api_key, status FROM merchants WHERE user_id = ?",
+      [user.id]
+    );
+    
+    const merchantData = merchantResult.rows.length > 0 ? merchantResult.rows[0] : null;
+    const isMerchant = merchantData && merchantData.status === 'approved';
 
     res.json({
       user: {
@@ -463,6 +472,10 @@ router.get("/profile", authenticateToken, async (req, res) => {
         createdAt: user.created_at,
         lastActive: user.last_active,
         emailVerified: user.email_verified,
+        isMerchant: isMerchant,
+        merchantStatus: merchantData?.status || null,
+        merchantId: merchantData?.id || null,
+        merchantApiKey: merchantData?.api_key || null,
       },
     });
   } catch (error) {
