@@ -66,30 +66,9 @@ const generateMerchantCredentials = (businessName) => {
   return { terminalId, apiKey };
 };
 
-// Register new merchant (optionally authenticated for auto-approval)
+// Register new merchant
 router.post("/register", async (req, res) => {
   try {
-    // Check if user is authenticated
-    const token = req.headers.authorization?.split(" ")[1];
-    let userId = null;
-    let userEmail = null;
-    
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key-change-in-production");
-        userId = decoded.userId;
-        
-        // Get user email
-        const userResult = await query("SELECT email FROM users WHERE id = ?", [userId]);
-        if (userResult.rows.length > 0) {
-          userEmail = userResult.rows[0].email;
-        }
-      } catch (err) {
-        // Invalid token, continue without authentication
-        console.log("Invalid token in merchant registration:", err.message);
-      }
-    }
-    
     const {
       businessName,
       businessType,
@@ -106,11 +85,8 @@ router.post("/register", async (req, res) => {
       subscriptionPlan = "basic",
     } = req.body;
 
-    // Use user's email if authenticated, otherwise require email in body
-    const merchantEmail = userEmail || email;
-    
     // Validate required fields
-    if (!businessName || !businessType || !merchantEmail || !contactPerson) {
+    if (!businessName || !businessType || !email || !contactPerson) {
       return res.status(400).json({
         error: "Missing required fields",
         message: "Business name, type, email, and contact person are required",
@@ -120,7 +96,7 @@ router.post("/register", async (req, res) => {
     // Check if merchant already exists
     const existingMerchant = await query(
       "SELECT id FROM merchants WHERE email = ?",
-      [merchantEmail]
+      [email]
     );
 
     if (existingMerchant.rows.length > 0) {
@@ -132,26 +108,21 @@ router.post("/register", async (req, res) => {
 
     // Generate credentials
     const { terminalId, apiKey } = generateMerchantCredentials(businessName);
-    
-    // Auto-approve if user is authenticated, otherwise pending
-    const status = userId ? 'approved' : 'pending';
-    const approvedAt = userId ? 'NOW()' : null;
 
     // Insert new merchant
     const result = await query(
       `
       INSERT INTO merchants (
-        user_id, business_name, business_type, email, phone, address, city, state, 
+        business_name, business_type, email, phone, address, city, state, 
         postal_code, country, tax_id, website_url, contact_person, 
-        api_key, terminal_id, subscription_plan, status, approved_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${userId ? (query.pool ? 'NOW()' : "datetime('now')") : 'NULL'})
+        api_key, terminal_id, subscription_plan, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
       ${query.pool ? "RETURNING id, business_name, terminal_id, status" : ""}
     `,
       [
-        userId,
         businessName,
         businessType,
-        merchantEmail,
+        email,
         phone,
         address,
         city,
@@ -164,7 +135,6 @@ router.post("/register", async (req, res) => {
         apiKey,
         terminalId,
         subscriptionPlan,
-        status,
       ]
     );
 
@@ -181,9 +151,7 @@ router.post("/register", async (req, res) => {
     }
 
     res.status(201).json({
-      message: userId 
-        ? "Merchant account created and approved!" 
-        : "Merchant registration submitted successfully",
+      message: "Merchant registration submitted successfully",
       merchant: {
         id: merchantData.id,
         businessName: merchantData.business_name,
@@ -191,12 +159,7 @@ router.post("/register", async (req, res) => {
         status: merchantData.status,
         apiKey: apiKey, // Only returned once during registration
       },
-      instructions: userId ? [
-        "✅ Your merchant account is approved and ready to use!",
-        "You can now access the Merchant POS and Dashboard",
-        "Keep your API key secure - it will not be shown again",
-        "Use your Terminal ID for POS integration",
-      ] : [
+      instructions: [
         "Your merchant account is pending approval",
         "You will receive an email notification once approved",
         "Keep your API key secure - it will not be shown again",

@@ -210,7 +210,6 @@ async function initializeDatabase() {
       ? `
       CREATE TABLE IF NOT EXISTS merchants (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
         business_name VARCHAR(255) NOT NULL,
         business_type VARCHAR(100) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
@@ -243,7 +242,6 @@ async function initializeDatabase() {
       : `
       CREATE TABLE IF NOT EXISTS merchants (
         id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-        user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
         business_name TEXT NOT NULL,
         business_type TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
