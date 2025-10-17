@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useUser } from "../contexts/UserContext";
+import { LoadingSpinner } from "./ui";
 
 const NFTGallery = () => {
   const { user } = useUser();
@@ -131,7 +132,7 @@ const NFTGallery = () => {
           <p>Your digital receipt collectibles on Hedera blockchain</p>
         </div>
         <div className="loading-state">
-          <div className="loading-spinner"></div>
+          <LoadingSpinner size="xl" color="primary" />
           <p>Loading your NFT collection...</p>
         </div>
       </div>

@@ -1,10 +1,10 @@
-# ReciptoVerse MVP 🧾
+# ReceiptoVerse MVP 🧾
 
 A blockchain-based receipt NFT platform built on Hedera Hashgraph that allows merchants to create receipt NFTs and reward customers with RECV tokens.
 
 ## 🎯 Overview
 
-ReciptoVerse transforms traditional paper receipts into valuable NFTs while rewarding customers for their purchases. Built on Hedera's fast and eco-friendly blockchain, this platform demonstrates how everyday transactions can be enhanced with blockchain technology.
+ReceiptoVerse transforms traditional paper receipts into valuable NFTs while rewarding customers for their purchases. Built on Hedera's fast and eco-friendly blockchain, this platform demonstrates how everyday transactions can be enhanced with blockchain technology.
 
 ## ✨ Features
 
@@ -219,7 +219,7 @@ curl -X POST http://localhost:3000/mint-receipt \
 ## 📊 Project Structure
 
 ```
-ReciptoVerse/
+ReceiptoVerse/
 ├── backend/
 │   ├── src/
 │   │   ├── server.js              # Main Express server

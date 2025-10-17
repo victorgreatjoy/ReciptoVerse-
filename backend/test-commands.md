@@ -1,4 +1,4 @@
-# ReciptoVerse API Testing Commands
+# ReceiptoVerse API Testing Commands
 
 # Make sure your server is running on http://localhost:3000
 

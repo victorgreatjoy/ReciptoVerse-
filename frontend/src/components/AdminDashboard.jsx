@@ -20,7 +20,7 @@ const AdminDashboard = () => {
 
   const API_BASE = import.meta.env.PROD
     ? import.meta.env.VITE_API_URL ||
-      "https://reciptoverse-production.up.railway.app"
+      "https://ReceiptoVerse-production.up.railway.app"
     : "http://localhost:3000";
 
   // Admin authentication

@@ -1,4 +1,4 @@
-# ReciptoVerse Development Workflow Guide
+# ReceiptoVerse Development Workflow Guide
 
 ## 🚀 Quick Start Commands
 
@@ -66,7 +66,7 @@ npm run dev:cloud
 
 ### Local Development (SQLite)
 
-- Database file: `backend/reciptoverse.db`
+- Database file: `backend/ReceiptoVerse.db`
 - No setup required
 - Perfect for UI development
 - Data persists between restarts

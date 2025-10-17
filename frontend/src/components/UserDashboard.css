@@ -8,18 +8,17 @@
 
 /* Enhanced Dashboard Header */
 .dashboard-header {
-  background: rgba(255, 255, 255, 0.15);
+  background: white !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid #e2e8f0 !important;
   border-radius: 20px;
   padding: 40px;
   margin-bottom: 32px;
-  color: white;
+  color: #1e293b !important;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
 }
 
 .dashboard-header::before {
@@ -51,10 +50,10 @@
   height: 90px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid #e2e8f0 !important;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25) !important;
   transition: transform 0.3s ease;
 }
 
@@ -71,19 +70,21 @@
 .avatar-placeholder {
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.2);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2.2rem;
   font-weight: 800;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .user-details h1 {
   margin: 0 0 8px 0;
   font-size: 2rem;
   font-weight: 700;
+  color: #1e293b !important;
 }
 
 .user-handle {
@@ -91,12 +92,14 @@
   opacity: 0.9;
   font-size: 1.1rem;
   font-weight: 500;
+  color: #475569 !important;
 }
 
 .account-age {
   margin: 0;
   opacity: 0.8;
   font-size: 0.9rem;
+  color: #64748b !important;
 }
 
 /* Stats Grid */
@@ -125,7 +128,7 @@
 }
 
 .stat-card.primary {
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #3b82f6 !important;
 }
 
 .stat-card.success {
@@ -450,30 +453,14 @@
   justify-content: center;
   min-height: 60vh;
   text-align: center;
-}
-
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #e5e7eb;
-  border-top: 4px solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  gap: 1.5rem;
 }
 
 .dashboard-loading p {
-  color: #6b7280;
+  color: #475569;
   font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0;
 }
 
 /* Responsive Design */

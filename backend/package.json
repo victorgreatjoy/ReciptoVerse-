@@ -1,5 +1,5 @@
 {
-  "name": "reciptoverse-backend",
+  "name": "ReceiptoVerse-backend",
   "version": "1.0.0",
   "main": "src/server.js",
   "scripts": {
@@ -22,7 +22,7 @@
   ],
   "author": "",
   "license": "ISC",
-  "description": "ReciptoVerse Backend API for Receipt NFTs",
+  "description": "ReceiptoVerse Backend API for Receipt NFTs",
   "dependencies": {
     "@hashgraph/sdk": "^2.73.2",
     "@sendgrid/mail": "^8.1.6",

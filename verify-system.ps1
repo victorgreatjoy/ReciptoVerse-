@@ -1,6 +1,6 @@
-# ReciptoVerse System Verification Script (PowerShell)
+# ReceiptoVerse System Verification Script (PowerShell)
 
-Write-Host "🔍 ReciptoVerse System Verification" -ForegroundColor Cyan
+Write-Host "🔍 ReceiptoVerse System Verification" -ForegroundColor Cyan
 Write-Host "==================================" -ForegroundColor Cyan
 Write-Host ""
 

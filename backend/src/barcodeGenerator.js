@@ -2,7 +2,7 @@ const QRCode = require("qrcode");
 const { v4: uuidv4 } = require("uuid");
 
 /**
- * Generate QR Code for ReciptoVerse User
+ * Generate QR Code for ReceiptoVerse User
  * Creates a unique barcode that merchants can scan to identify customers
  */
 class UserBarcodeGenerator {
@@ -13,7 +13,7 @@ class UserBarcodeGenerator {
    */
   static generateBarcodeData(user) {
     const barcodeData = {
-      platform: "ReciptoVerse",
+      platform: "ReceiptoVerse",
       version: "1.0",
       userId: user.id,
       handle: user.handle,
@@ -37,7 +37,7 @@ class UserBarcodeGenerator {
         quality: 0.92,
         margin: 1,
         color: {
-          dark: "#1a1a2e", // ReciptoVerse brand color
+          dark: "#1a1a2e", // ReceiptoVerse brand color
           light: "#FFFFFF",
         },
         width: 300,
@@ -75,7 +75,7 @@ class UserBarcodeGenerator {
         displayData: {
           handle: user.handle,
           displayName: user.display_name || user.handle,
-          platform: "ReciptoVerse",
+          platform: "ReceiptoVerse",
           instructions:
             "Show this QR code at checkout to receive digital receipts",
         },
@@ -97,7 +97,7 @@ class UserBarcodeGenerator {
 
       // Validate required fields
       if (
-        barcodeData.platform === "ReciptoVerse" &&
+        barcodeData.platform === "ReceiptoVerse" &&
         barcodeData.userId &&
         barcodeData.handle &&
         barcodeData.type === "customer_id"

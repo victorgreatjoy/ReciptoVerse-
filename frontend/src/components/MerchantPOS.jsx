@@ -276,7 +276,7 @@ const MerchantPOS = () => {
           <div className="pos-step scan-step">
             <div className="step-header">
               <h2>📱 Scan Customer QR Code</h2>
-              <p>Ask the customer to show their ReciptoVerse QR code</p>
+              <p>Ask the customer to show their ReceiptoVerse QR code</p>
             </div>
 
             <div className="qr-input-section">

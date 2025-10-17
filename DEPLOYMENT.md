@@ -9,9 +9,9 @@
    ```bash
    git init
    git add .
-   git commit -m "Initial ReciptoVerse MVP"
+   git commit -m "Initial ReceiptoVerse MVP"
    git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/reciptoverse.git
+   git remote add origin https://github.com/YOUR_USERNAME/ReceiptoVerse.git
    git push -u origin main
    ```
 
@@ -107,7 +107,7 @@
 
 Both Vercel and Railway provide:
 
-- ✅ Free subdomain (e.g., reciptoverse.vercel.app)
+- ✅ Free subdomain (e.g., ReceiptoVerse.vercel.app)
 - ✅ Automatic SSL certificates
 - ✅ Custom domain support (optional)
 
@@ -230,4 +230,4 @@ railway deploy
 
 ---
 
-Your ReciptoVerse MVP will be live in ~30 minutes! 🎉
+Your ReceiptoVerse MVP will be live in ~30 minutes! 🎉

@@ -2,7 +2,7 @@ const path = require("path");
 require("dotenv").config();
 
 /**
- * Smart Environment Configuration for ReciptoVerse
+ * Smart Environment Configuration for ReceiptoVerse
  * Automatically loads the right environment based on NODE_ENV
  */
 class EnvironmentConfig {
@@ -120,7 +120,7 @@ class EnvironmentConfig {
 
   // Display current configuration (without sensitive data)
   displayConfig() {
-    console.log("\n🚀 ReciptoVerse Configuration:");
+    console.log("\n🚀 ReceiptoVerse Configuration:");
     console.log(`   Environment: ${this.environment}`);
     console.log(
       `   Database: ${this.database.type} ${

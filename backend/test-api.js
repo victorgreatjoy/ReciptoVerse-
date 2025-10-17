@@ -1,5 +1,5 @@
 /**
- * Test script for ReciptoVerse API endpoints
+ * Test script for ReceiptoVerse API endpoints
  * Run with: node test-api.js
  */
 
@@ -57,7 +57,7 @@ async function testReceiptMinting() {
 }
 
 async function runTests() {
-  console.log("🚀 Starting ReciptoVerse API Tests");
+  console.log("🚀 Starting ReceiptoVerse API Tests");
   console.log("Server:", API_BASE);
 
   // Test 1: Token Association

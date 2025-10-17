@@ -7,7 +7,7 @@ const {
 
 async function createRECVToken(treasuryAccountId) {
   const tx = await new TokenCreateTransaction()
-    .setTokenName("ReciptoVerse")
+    .setTokenName("ReceiptoVerse")
     .setTokenSymbol("RECV")
     .setTokenType(TokenType.FungibleCommon)
     .setDecimals(2)
@@ -21,7 +21,7 @@ async function createRECVToken(treasuryAccountId) {
 
 async function createRNFTCollection(treasuryAccountId) {
   const tx = await new TokenCreateTransaction()
-    .setTokenName("ReciptoVerse Receipt")
+    .setTokenName("ReceiptoVerse Receipt")
     .setTokenSymbol("rNFT")
     .setTokenType(TokenType.NonFungibleUnique)
     .setTreasuryAccountId(treasuryAccountId)

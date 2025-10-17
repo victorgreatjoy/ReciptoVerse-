@@ -32,7 +32,7 @@ class NotificationService {
 
           // Send confirmation
           socket.emit("authentication_success", {
-            message: "Connected to ReciptoVerse notifications",
+            message: "Connected to ReceiptoVerse notifications",
             userId: userId,
             handle: userHandle,
           });
@@ -55,7 +55,7 @@ class NotificationService {
 
           // Send confirmation
           socket.emit("authentication_success", {
-            message: "Connected to ReciptoVerse merchant notifications",
+            message: "Connected to ReceiptoVerse merchant notifications",
             merchantId: merchantId,
             businessName: businessName,
             terminalId: terminalId,

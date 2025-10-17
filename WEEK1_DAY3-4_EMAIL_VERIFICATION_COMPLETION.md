@@ -97,7 +97,7 @@
 
 #### Verification Email:
 
-- 🔐 Branded header with ReciptoVerse logo
+- 🔐 Branded header with ReceiptoVerse logo
 - 📧 Clear 6-digit code display
 - ⏰ Expiration time notice
 - 🎯 Feature highlights for motivation
@@ -129,7 +129,7 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-app-password
-EMAIL_FROM=ReciptoVerse <noreply@reciptoverse.com>
+EMAIL_FROM=ReceiptoVerse <noreply@ReceiptoVerse.com>
 ```
 
 ### **🛡️ Security Enhancements**
@@ -247,7 +247,7 @@ EMAIL_FROM=ReciptoVerse <noreply@reciptoverse.com>
 
 - 📧 **Professional email service** with Ethereal Email for development
 - 🔐 **Secure verification flow** with 6-digit codes and rate limiting
-- 🎨 **Beautiful email templates** with ReciptoVerse branding
+- 🎨 **Beautiful email templates** with ReceiptoVerse branding
 - 🖥️ **Seamless frontend integration** with modal-based verification
 - 🛡️ **Production-ready security** with comprehensive validation
 
@@ -261,4 +261,4 @@ EMAIL_FROM=ReciptoVerse <noreply@reciptoverse.com>
 - **Professional user experience** with branded communications
 - **Developer-friendly testing** with Ethereal Email preview
 
-The email verification system elevates ReciptoVerse's security and user onboarding experience, setting the foundation for reliable user authentication and communication.
+The email verification system elevates ReceiptoVerse's security and user onboarding experience, setting the foundation for reliable user authentication and communication.

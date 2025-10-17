@@ -2,7 +2,7 @@
 
 ## Overview
 
-Successfully implemented a modern design system and UI component library for ReciptoVerse, transforming the application's visual foundation with African-inspired themes and professional user experience enhancements.
+Successfully implemented a modern design system and UI component library for ReceiptoVerse, transforming the application's visual foundation with African-inspired themes and professional user experience enhancements.
 
 ## 🎨 Design System Implementation
 

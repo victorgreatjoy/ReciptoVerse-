@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUser } from "../contexts/UserContext";
+import { LoadingSpinner } from "./ui";
 import "./UserQRCode.css";
 
 const UserQRCode = () => {
@@ -105,7 +106,7 @@ const UserQRCode = () => {
     return (
       <div className="qr-section">
         <div className="qr-loading">
-          <div className="loading-spinner"></div>
+          <LoadingSpinner size="xl" color="primary" />
           <p>Loading your QR code...</p>
         </div>
       </div>
@@ -196,7 +197,7 @@ const UserQRCode = () => {
         <button
           onClick={generateQRCode}
           disabled={regenerating}
-          className="btn-outline"
+          className="btn-secondary"
         >
           {regenerating ? "🔄 Regenerating..." : "🔄 Regenerate"}
         </button>

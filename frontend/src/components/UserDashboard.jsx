@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "../contexts/UserContext";
+import { LoadingSpinner } from "./ui";
 import "./UserDashboard.css";
 
 const UserDashboard = () => {
@@ -39,7 +40,7 @@ const UserDashboard = () => {
   if (isLoading) {
     return (
       <div className="dashboard-loading">
-        <div className="loading-spinner"></div>
+        <LoadingSpinner size="xl" color="primary" />
         <p>Loading your dashboard...</p>
       </div>
     );

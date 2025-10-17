@@ -1,8 +1,8 @@
-# 🧪 ReciptoVerse - Complete Testing Guide
+# 🧪 ReceiptoVerse - Complete Testing Guide
 
 ## Overview
 
-This guide will walk you through testing all functionalities of ReciptoVerse, from user registration to NFT minting and real-time notifications.
+This guide will walk you through testing all functionalities of ReceiptoVerse, from user registration to NFT minting and real-time notifications.
 
 ---
 
@@ -23,7 +23,7 @@ npm run dev
 ### 2. Verify System Status
 
 - Backend: `http://localhost:3000` (should show server logs)
-- Frontend: `http://localhost:5173` (should load ReciptoVerse)
+- Frontend: `http://localhost:5173` (should load ReceiptoVerse)
 - Health Check: `http://localhost:3000/api/health`
 
 ---
@@ -270,4 +270,4 @@ When all tests pass, you have successfully verified:
 - ✅ NFT gallery with HashScan links
 - ✅ Complete receipt management system
 
-**🚀 ReciptoVerse is fully functional and ready for production!**
+**🚀 ReceiptoVerse is fully functional and ready for production!**

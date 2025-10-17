@@ -181,7 +181,7 @@ const MerchantRegistration = () => {
         <div className="registration-header">
           <h1>🏪 Merchant Registration</h1>
           <p>
-            Join ReciptoVerse and start providing digital receipts to your
+            Join ReceiptoVerse and start providing digital receipts to your
             customers
           </p>
         </div>
@@ -383,7 +383,7 @@ const MerchantRegistration = () => {
         </form>
 
         <div className="registration-info">
-          <h3>Why Join ReciptoVerse?</h3>
+          <h3>Why Join ReceiptoVerse?</h3>
           <ul>
             <li>🌍 Go paperless and reduce environmental impact</li>
             <li>📱 Provide customers with instant digital receipts</li>

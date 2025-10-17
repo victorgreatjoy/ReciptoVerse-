@@ -320,7 +320,7 @@ const MerchantDashboard = () => {
 
       <div className="dashboard-footer">
         <p>
-          Need help? Contact ReciptoVerse support for assistance with your
+          Need help? Contact ReceiptoVerse support for assistance with your
           merchant account.
         </p>
       </div>

@@ -48,7 +48,7 @@
 ## 🎯 Current Project Structure for Deployment
 
 ```
-ReciptoVerse/
+ReceiptoVerse/
 ├── backend/
 │   ├── src/
 │   │   ├── server.js              # Main API server

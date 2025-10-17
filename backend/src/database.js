@@ -21,7 +21,7 @@ if (isProduction || hasPostgreSQL) {
 } else {
   // Use SQLite for local development
   console.log("📁 Using SQLite database for local development");
-  const dbPath = path.join(__dirname, "../../data/reciptoverse.db");
+  const dbPath = path.join(__dirname, "../../data/ReceiptoVerse.db");
 
   // Ensure data directory exists
   const fs = require("fs");

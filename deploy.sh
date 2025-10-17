@@ -1,19 +1,19 @@
 #!/bin/bash
 
-# ReciptoVerse Deployment Script
-echo "🚀 Preparing ReciptoVerse for deployment..."
+# ReceiptoVerse Deployment Script
+echo "🚀 Preparing ReceiptoVerse for deployment..."
 
 # Check if git is initialized
 if [ ! -d ".git" ]; then
     echo "📦 Initializing Git repository..."
     git init
     git add .
-    git commit -m "Initial ReciptoVerse MVP commit"
+    git commit -m "Initial ReceiptoVerse MVP commit"
     echo "✅ Git repository initialized"
     echo ""
     echo "🔗 Next steps:"
     echo "1. Create a GitHub repository: https://github.com/new"
-    echo "2. Add remote: git remote add origin https://github.com/YOUR_USERNAME/reciptoverse.git"
+    echo "2. Add remote: git remote add origin https://github.com/YOUR_USERNAME/ReceiptoVerse.git"
     echo "3. Push code: git push -u origin main"
     echo ""
 else
@@ -54,4 +54,4 @@ echo "   - Start command: cd backend/src && node server.js"
 echo ""
 echo "📚 Full guide: see DEPLOYMENT.md"
 echo ""
-echo "🎉 Your ReciptoVerse MVP is ready for the world!"
+echo "🎉 Your ReceiptoVerse MVP is ready for the world!"

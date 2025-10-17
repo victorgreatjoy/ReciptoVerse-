@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "../contexts/UserContext";
 import ReceiptForm from "./ReceiptForm";
+import { LoadingSpinner } from "./ui";
 import "./ReceiptDashboard.css";
 
+// Updated: Oct 17, 2025 - Enhanced UI/UX
 const ReceiptDashboard = () => {
   const { API_BASE } = useUser();
   const [receipts, setReceipts] = useState([]);
@@ -21,7 +23,7 @@ const ReceiptDashboard = () => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const token = localStorage.getItem("reciptoverse_token");
+      const token = localStorage.getItem("ReceiptoVerse_token");
       const response = await fetch(`${API_BASE}/api/receipts/categories`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -41,7 +43,7 @@ const ReceiptDashboard = () => {
   const fetchReceipts = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("reciptoverse_token");
+      const token = localStorage.getItem("ReceiptoVerse_token");
 
       const queryParams = new URLSearchParams({
         ...filters,
@@ -105,7 +107,7 @@ const ReceiptDashboard = () => {
       <div className="dashboard-header">
         <div className="header-content">
           <h2>📄 Receipt Manager</h2>
-          <p>Organize and track your receipts by category</p>
+          <p>Organize and track your receipts by category [UI Enhanced ✨]</p>
         </div>
         <button
           className="add-receipt-btn"
@@ -171,24 +173,32 @@ const ReceiptDashboard = () => {
         <div className="search-box">
           <input
             type="text"
-            placeholder="🔍 Search receipts..."
+            placeholder="🔍 Search receipts by store name or category..."
             value={filters.search}
             onChange={(e) => handleFilterChange("search", e.target.value)}
           />
         </div>
         <div className="date-filters">
-          <input
-            type="date"
-            value={filters.startDate}
-            onChange={(e) => handleFilterChange("startDate", e.target.value)}
-            placeholder="Start Date"
-          />
-          <input
-            type="date"
-            value={filters.endDate}
-            onChange={(e) => handleFilterChange("endDate", e.target.value)}
-            placeholder="End Date"
-          />
+          <div className="date-filter-group">
+            <label className="date-filter-label">From Date</label>
+            <input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) => handleFilterChange("startDate", e.target.value)}
+              title="Filter from date"
+              aria-label="Start date filter"
+            />
+          </div>
+          <div className="date-filter-group">
+            <label className="date-filter-label">To Date</label>
+            <input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) => handleFilterChange("endDate", e.target.value)}
+              title="Filter to date"
+              aria-label="End date filter"
+            />
+          </div>
         </div>
         <select
           value={`${filters.sortBy}-${filters.sortOrder}`}
@@ -197,6 +207,8 @@ const ReceiptDashboard = () => {
             handleFilterChange("sortBy", sortBy);
             handleFilterChange("sortOrder", sortOrder);
           }}
+          title="Sort receipts by"
+          aria-label="Sort receipts"
         >
           <option value="receipt_date-DESC">📅 Newest First</option>
           <option value="receipt_date-ASC">📅 Oldest First</option>
@@ -210,8 +222,8 @@ const ReceiptDashboard = () => {
       <div className="receipts-grid">
         {loading ? (
           <div className="loading-state">
-            <div className="loading-spinner"></div>
-            <p>Loading receipts...</p>
+            <LoadingSpinner size="xl" color="primary" />
+            <p className="loading-text">Loading receipts...</p>
           </div>
         ) : receipts.length === 0 ? (
           <div className="empty-state">

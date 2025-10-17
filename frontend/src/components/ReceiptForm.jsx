@@ -22,7 +22,7 @@ const ReceiptForm = ({ onSuccess, onCancel, editReceipt = null }) => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const token = localStorage.getItem("reciptoverse_token");
+      const token = localStorage.getItem("ReceiptoVerse_token");
       const response = await fetch(`${API_BASE}/api/receipts/categories`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -109,7 +109,7 @@ const ReceiptForm = ({ onSuccess, onCancel, editReceipt = null }) => {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("reciptoverse_token");
+      const token = localStorage.getItem("ReceiptoVerse_token");
       const url = editReceipt
         ? `${API_BASE}/api/receipts/${editReceipt.id}`
         : `${API_BASE}/api/receipts`;

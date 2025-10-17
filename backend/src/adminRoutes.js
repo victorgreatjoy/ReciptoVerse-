@@ -343,7 +343,7 @@ router.get("/admin-requests", authenticateAdmin, async (req, res) => {
           id: "admin",
           handle: "admin",
           display_name: "System Admin",
-          email: "admin@reciptoverse.com",
+          email: "admin@ReceiptoVerse.com",
           admin_approved_at: new Date().toISOString(),
           admin_approved_by: "system",
         },
@@ -371,30 +371,24 @@ router.post("/request-admin", async (req, res) => {
 
 // Admin privilege management - DISABLED until database migration
 router.post("/approve-admin/:userId", authenticateAdmin, async (req, res) => {
-  res
-    .status(501)
-    .json({
-      error:
-        "Admin privilege management not available - database migration required",
-    });
+  res.status(501).json({
+    error:
+      "Admin privilege management not available - database migration required",
+  });
 });
 
 router.post("/reject-admin/:userId", authenticateAdmin, async (req, res) => {
-  res
-    .status(501)
-    .json({
-      error:
-        "Admin privilege management not available - database migration required",
-    });
+  res.status(501).json({
+    error:
+      "Admin privilege management not available - database migration required",
+  });
 });
 
 router.post("/revoke-admin/:userId", authenticateAdmin, async (req, res) => {
-  res
-    .status(501)
-    .json({
-      error:
-        "Admin privilege management not available - database migration required",
-    });
+  res.status(501).json({
+    error:
+      "Admin privilege management not available - database migration required",
+  });
 });
 
 // Get current NFT settings (for use by other modules)

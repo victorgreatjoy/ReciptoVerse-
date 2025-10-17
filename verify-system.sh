@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# ReciptoVerse System Verification Script
+# ReceiptoVerse System Verification Script
 
-echo "🔍 ReciptoVerse System Verification"
+echo "🔍 ReceiptoVerse System Verification"
 echo "=================================="
 echo ""
 

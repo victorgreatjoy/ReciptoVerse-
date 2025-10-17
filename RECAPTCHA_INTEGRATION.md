@@ -1,8 +1,8 @@
-# reCAPTCHA Integration - ReciptoVerse
+# reCAPTCHA Integration - ReceiptoVerse
 
 ## Overview
 
-This document outlines the Google reCAPTCHA v2 integration implemented in ReciptoVerse for enhanced security during user registration.
+This document outlines the Google reCAPTCHA v2 integration implemented in ReceiptoVerse for enhanced security during user registration.
 
 ## Configuration
 
@@ -176,4 +176,4 @@ Enable detailed logging by setting `NODE_ENV=development` in backend environment
 
 - [Google reCAPTCHA Documentation](https://developers.google.com/recaptcha)
 - [React Google reCAPTCHA Library](https://github.com/dozoisch/react-google-recaptcha)
-- ReciptoVerse Team: Contact for configuration assistance
+- ReceiptoVerse Team: Contact for configuration assistance

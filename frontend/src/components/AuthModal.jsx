@@ -99,7 +99,7 @@ const AuthModal = ({ isOpen, onClose, mode: initialMode = "login" }) => {
     <div className="auth-modal-overlay" onClick={onClose}>
       <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
         <div className="auth-modal-header">
-          <h2>{mode === "login" ? "Welcome Back!" : "Join ReciptoVerse"}</h2>
+          <h2>{mode === "login" ? "Welcome Back!" : "Join ReceiptoVerse"}</h2>
           <button className="close-btn" onClick={onClose}>
             ×
           </button>

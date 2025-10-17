@@ -1,7 +1,7 @@
 import { HashConnect } from "hashconnect";
 
 const appMetadata = {
-  name: "ReciptoVerse",
+  name: "ReceiptoVerse",
   description: "Receipt NFTs + Rewards on Hedera",
   icon: "https://via.placeholder.com/100", // your app icon
 };

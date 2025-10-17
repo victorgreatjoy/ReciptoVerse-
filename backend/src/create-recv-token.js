@@ -35,7 +35,7 @@ async function main() {
 
     // 4. Create the token transaction with conservative timing
     const tokenCreateTx = new TokenCreateTransaction()
-      .setTokenName("ReciptoVerse") // Token full name
+      .setTokenName("ReceiptoVerse") // Token full name
       .setTokenSymbol("RECV") // Token symbol
       .setTokenType(TokenType.FungibleCommon) // Fungible token (like ERC-20)
       .setDecimals(2) // 2 decimal places

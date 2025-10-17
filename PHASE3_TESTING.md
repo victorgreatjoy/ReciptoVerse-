@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# ReciptoVerse Phase 3 Testing Script
+# ReceiptoVerse Phase 3 Testing Script
 
 # Full NFT Integration Testing Guide
 
-echo "🎉 ReciptoVerse Phase 3: Hedera NFT Integration"
+echo "🎉 ReceiptoVerse Phase 3: Hedera NFT Integration"
 echo "=============================================="
 echo ""
 
