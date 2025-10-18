@@ -388,7 +388,7 @@ async function initializeDatabase() {
     console.log("🔄 Checking for user_id column in merchants table...");
     try {
       await query(
-        isPostgreSQL
+        pool
           ? "ALTER TABLE merchants ADD COLUMN user_id UUID REFERENCES users(id)"
           : "ALTER TABLE merchants ADD COLUMN user_id TEXT REFERENCES users(id)"
       );
