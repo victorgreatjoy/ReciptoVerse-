@@ -118,7 +118,7 @@ const ReceiptDashboard = () => {
       <div className="dashboard-header">
         <div className="header-content">
           <h2>📄 My Receipts</h2>
-          <p>View receipts received from merchants</p>
+          <p>View receipts received from merchants [UI Enhanced ✨]</p>
         </div>
       </div>
 
