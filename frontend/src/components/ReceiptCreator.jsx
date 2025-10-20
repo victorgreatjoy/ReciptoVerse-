@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useWallet } from "../contexts/WalletContext";
+import { useSelector } from "react-redux";
 import "./ReceiptCreator.css";
 
 const ReceiptCreator = ({ apiBase, onMintSuccess, onError }) => {
-  const { accountId, isConnected } = useWallet();
+  const { accountId, isConnected } = useSelector((state) => state.hashconnect);
   const [loading, setLoading] = useState(false);
   const [receiptData, setReceiptData] = useState({
     merchant: "",

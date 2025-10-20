@@ -12,6 +12,7 @@ import AuthModalNew from "./AuthModalNew";
 import EmailVerification from "./EmailVerification";
 import NotificationCenter from "./NotificationCenter";
 import AdminDashboard from "./AdminDashboard";
+import HashConnectButton from "./HashConnectButton";
 import { LoadingSpinner, Button, Badge } from "./ui";
 import {
   UserIcon,
@@ -223,6 +224,7 @@ const AppContent = () => {
               </div>
 
               <div className="flex items-center space-x-4">
+                <HashConnectButton />
                 {isAuthenticated ? (
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">

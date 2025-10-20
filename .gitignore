@@ -1,9 +1,18 @@
-# Environment variables
+# Environment variables (DO NOT COMMIT - contains secrets)
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
+.env.staging
+.env.staging.local
+
+# Keep example env files for documentation
+!.env.example
+!**/.env.example
 
 # Backup files - ignore backup folder
 backup/
