@@ -4,7 +4,7 @@ import { Menu, X } from "lucide-react";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // Get app URL from environment variable
   const appUrl = import.meta.env.VITE_APP_URL || "http://localhost:5173";
 

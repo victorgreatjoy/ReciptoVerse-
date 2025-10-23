@@ -7,6 +7,7 @@ The website uses environment variables to configure external URLs.
 ### Setup for Development
 
 1. Copy `.env.example` to `.env`:
+
    ```bash
    cp .env.example .env
    ```
@@ -21,6 +22,7 @@ The website uses environment variables to configure external URLs.
 When deploying to Railway or other platforms:
 
 1. Set the `VITE_APP_URL` environment variable in your deployment platform:
+
    ```
    VITE_APP_URL=https://your-frontend-app.railway.app
    ```
@@ -32,8 +34,8 @@ When deploying to Railway or other platforms:
 
 ## Available Environment Variables
 
-| Variable | Description | Default (Dev) | Example (Prod) |
-|----------|-------------|---------------|----------------|
+| Variable       | Description                              | Default (Dev)           | Example (Prod)                               |
+| -------------- | ---------------------------------------- | ----------------------- | -------------------------------------------- |
 | `VITE_APP_URL` | Frontend app URL for "Launch App" button | `http://localhost:5173` | `https://receiptoverse-frontend.railway.app` |
 
 ## How It Works
@@ -48,6 +50,7 @@ The link opens in a new tab for better user experience.
 ## Testing
 
 1. Start the website development server:
+
    ```bash
    npm run dev
    ```
