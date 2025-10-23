@@ -351,7 +351,17 @@ router.get("/", authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error("Receipts fetch error:", error);
-    res.status(500).json({ error: "Failed to fetch receipts" });
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      query: req.query,
+    });
+    res.status(500).json({
+      error: "Failed to fetch receipts",
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 });
 

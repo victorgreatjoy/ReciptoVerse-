@@ -376,7 +376,7 @@ router.get("/stats", authenticateMerchant, async (req, res) => {
       [merchantId]
     );
 
-    const stats = receiptStats.rows[0] || {
+    const stats = (receiptStats.rows && receiptStats.rows[0]) || {
       total_receipts: 0,
       total_amount: 0,
       average_amount: 0,
@@ -393,11 +393,16 @@ router.get("/stats", authenticateMerchant, async (req, res) => {
           (req.merchant.receipts_processed / req.merchant.receipt_limit) * 100
         ),
       },
-      dailyStats: dailyStats.rows || [],
-      categoryBreakdown: categoryStats.rows || [],
+      dailyStats: (dailyStats.rows && dailyStats.rows) || [],
+      categoryBreakdown: (categoryStats.rows && categoryStats.rows) || [],
     });
   } catch (error) {
     console.error("Get merchant stats error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      merchantId: req.merchant?.id,
+    });
     res.status(500).json({ error: "Failed to retrieve statistics" });
   }
 });
