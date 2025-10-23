@@ -274,6 +274,111 @@ async function initializeDatabase() {
 
     await query(merchantsTableSQL);
 
+    // Points Transactions table - tracks all point awards
+    const pointsTransactionsTableSQL = pool
+      ? `
+      CREATE TABLE IF NOT EXISTS points_transactions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        merchant_id UUID REFERENCES merchants(id) ON DELETE SET NULL,
+        receipt_id UUID REFERENCES receipts(id) ON DELETE SET NULL,
+        amount INTEGER NOT NULL,
+        purchase_amount DECIMAL(10,2),
+        transaction_type VARCHAR(50) DEFAULT 'purchase',
+        status VARCHAR(20) DEFAULT 'confirmed',
+        description TEXT,
+        metadata JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `
+      : `
+      CREATE TABLE IF NOT EXISTS points_transactions (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        merchant_id TEXT REFERENCES merchants(id) ON DELETE SET NULL,
+        receipt_id TEXT REFERENCES receipts(id) ON DELETE SET NULL,
+        amount INTEGER NOT NULL,
+        purchase_amount REAL,
+        transaction_type TEXT DEFAULT 'purchase',
+        status TEXT DEFAULT 'confirmed',
+        description TEXT,
+        metadata TEXT DEFAULT '{}',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    await query(pointsTransactionsTableSQL);
+
+    // Token Mint Requests table - tracks token minting
+    const tokenMintRequestsTableSQL = pool
+      ? `
+      CREATE TABLE IF NOT EXISTS token_mint_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        points_spent INTEGER NOT NULL,
+        tokens_requested DECIMAL(18,8) NOT NULL,
+        tokens_received DECIMAL(18,8),
+        conversion_rate DECIMAL(10,4) NOT NULL,
+        wallet_address VARCHAR(255),
+        transaction_hash VARCHAR(255),
+        hedera_transaction_id VARCHAR(255),
+        status VARCHAR(20) DEFAULT 'pending',
+        error_message TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        completed_at TIMESTAMP
+      )
+    `
+      : `
+      CREATE TABLE IF NOT EXISTS token_mint_requests (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        points_spent INTEGER NOT NULL,
+        tokens_requested REAL NOT NULL,
+        tokens_received REAL,
+        conversion_rate REAL NOT NULL,
+        wallet_address TEXT,
+        transaction_hash TEXT,
+        hedera_transaction_id TEXT,
+        status TEXT DEFAULT 'pending',
+        error_message TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        completed_at DATETIME
+      )
+    `;
+
+    await query(tokenMintRequestsTableSQL);
+
+    // Merchant Rewards Tracking table
+    const merchantRewardsTableSQL = pool
+      ? `
+      CREATE TABLE IF NOT EXISTS merchant_rewards (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        merchant_id UUID REFERENCES merchants(id) ON DELETE CASCADE,
+        total_points_distributed INTEGER DEFAULT 0,
+        total_transactions INTEGER DEFAULT 0,
+        reward_rate DECIMAL(5,4) DEFAULT 1.0000,
+        is_active BOOLEAN DEFAULT TRUE,
+        last_award_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `
+      : `
+      CREATE TABLE IF NOT EXISTS merchant_rewards (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        merchant_id TEXT REFERENCES merchants(id) ON DELETE CASCADE,
+        total_points_distributed INTEGER DEFAULT 0,
+        total_transactions INTEGER DEFAULT 0,
+        reward_rate REAL DEFAULT 1.0,
+        is_active INTEGER DEFAULT 1,
+        last_award_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    await query(merchantRewardsTableSQL);
+
     // Create indexes for better performance
     if (pool) {
       // PostgreSQL indexes
@@ -299,6 +404,21 @@ async function initializeDatabase() {
       await query(
         "CREATE INDEX IF NOT EXISTS idx_merchants_terminal_id ON merchants(terminal_id)"
       );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_points_transactions_user_id ON points_transactions(user_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_points_transactions_status ON points_transactions(status)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_token_mint_requests_user_id ON token_mint_requests(user_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_token_mint_requests_status ON token_mint_requests(status)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_merchant_rewards_merchant_id ON merchant_rewards(merchant_id)"
+      );
     } else {
       // SQLite indexes
       await query(
@@ -323,6 +443,115 @@ async function initializeDatabase() {
       await query(
         "CREATE INDEX IF NOT EXISTS idx_merchants_terminal_id ON merchants(terminal_id)"
       );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_points_transactions_user_id ON points_transactions(user_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_points_transactions_status ON points_transactions(status)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_token_mint_requests_user_id ON token_mint_requests(user_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_token_mint_requests_status ON token_mint_requests(status)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_merchant_rewards_merchant_id ON merchant_rewards(merchant_id)"
+      );
+    }
+
+    // Add points-related columns to users table
+    console.log("🔄 Adding points system columns to users table...");
+
+    try {
+      await query(
+        "ALTER TABLE users ADD COLUMN points_balance INTEGER DEFAULT 0"
+      );
+      console.log("✅ Added points_balance column");
+    } catch (error) {
+      if (
+        error.message.includes("duplicate column name") ||
+        error.message.includes("already exists")
+      ) {
+        console.log("ℹ️ points_balance column already exists");
+      } else {
+        console.error("❌ Error adding points_balance column:", error.message);
+      }
+    }
+
+    try {
+      await query(
+        "ALTER TABLE users ADD COLUMN total_points_earned INTEGER DEFAULT 0"
+      );
+      console.log("✅ Added total_points_earned column");
+    } catch (error) {
+      if (
+        error.message.includes("duplicate column name") ||
+        error.message.includes("already exists")
+      ) {
+        console.log("ℹ️ total_points_earned column already exists");
+      } else {
+        console.error(
+          "❌ Error adding total_points_earned column:",
+          error.message
+        );
+      }
+    }
+
+    try {
+      const decimalType = pool ? "DECIMAL(18,8)" : "REAL";
+      await query(
+        `ALTER TABLE users ADD COLUMN total_tokens_minted ${decimalType} DEFAULT 0`
+      );
+      console.log("✅ Added total_tokens_minted column");
+    } catch (error) {
+      if (
+        error.message.includes("duplicate column name") ||
+        error.message.includes("already exists")
+      ) {
+        console.log("ℹ️ total_tokens_minted column already exists");
+      } else {
+        console.error(
+          "❌ Error adding total_tokens_minted column:",
+          error.message
+        );
+      }
+    }
+
+    try {
+      await query(
+        "ALTER TABLE users ADD COLUMN loyalty_tier TEXT DEFAULT 'bronze'"
+      );
+      console.log("✅ Added loyalty_tier column");
+    } catch (error) {
+      if (
+        error.message.includes("duplicate column name") ||
+        error.message.includes("already exists")
+      ) {
+        console.log("ℹ️ loyalty_tier column already exists");
+      } else {
+        console.error("❌ Error adding loyalty_tier column:", error.message);
+      }
+    }
+
+    try {
+      const timestampType = pool ? "TIMESTAMP" : "DATETIME";
+      await query(
+        `ALTER TABLE users ADD COLUMN last_purchase_date ${timestampType}`
+      );
+      console.log("✅ Added last_purchase_date column");
+    } catch (error) {
+      if (
+        error.message.includes("duplicate column name") ||
+        error.message.includes("already exists")
+      ) {
+        console.log("ℹ️ last_purchase_date column already exists");
+      } else {
+        console.error(
+          "❌ Error adding last_purchase_date column:",
+          error.message
+        );
+      }
     }
 
     // Add email verification columns to existing users table if they don't exist

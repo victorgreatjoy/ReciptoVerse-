@@ -1,6 +1,7 @@
 import { UserProvider } from "./contexts/UserContext";
 import { WebSocketProvider } from "./contexts/WebSocketContext";
 import { ToastProvider } from "./components/ui";
+import { Toaster } from "sonner";
 import AppContent from "./components/AppContent";
 import "./App.css";
 
@@ -12,6 +13,7 @@ function App() {
     <ToastProvider>
       <UserProvider>
         <WebSocketProvider>
+          <Toaster position="top-right" richColors />
           <AppContent />
         </WebSocketProvider>
       </UserProvider>

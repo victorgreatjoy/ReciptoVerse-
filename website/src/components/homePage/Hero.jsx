@@ -1,14 +1,26 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, BarChart, FileText } from "lucide-react";
+import logo from "../../assets/logo.png";
 
 const Hero = ({ onJoinWaitlist }) => {
   // Accept onJoinWaitlist as a prop
   // The local state for the modal has been removed from this component.
 
   return (
-    <section className="relative text-white py-28 sm:py-32 md:py-40">
+    <section className="relative text-white pt-2 py-28 sm:py-32 md:py-40">
       <div className="container mx-auto px-6 text-center relative z-10">
+        <img
+          className="mx-auto"
+          src={logo}
+          alt="ReceiptoVerse Logo"
+          style={{
+            width: "300px",
+            height: "300px",
+            borderRadius: "8px",
+            objectFit: "contain",
+          }}
+        />
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
           Your Receipts, <span className="text-cyan-400">Reinvented.</span>
         </h1>

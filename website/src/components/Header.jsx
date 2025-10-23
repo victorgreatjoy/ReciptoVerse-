@@ -4,6 +4,9 @@ import { Menu, X } from "lucide-react";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Get app URL from environment variable
+  const appUrl = import.meta.env.VITE_APP_URL || "http://localhost:5173";
 
   return (
     <header className="bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50 border-b border-slate-800">
@@ -47,12 +50,14 @@ const Header = () => {
         </nav>
 
         <div className="hidden md:flex">
-          <Link
-            to="/dashboard"
+          <a
+            href={appUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-cyan-500 text-white font-bold px-6 py-2 rounded-lg hover:bg-cyan-600 transition-all duration-300"
           >
             Launch App
-          </Link>
+          </a>
         </div>
 
         {/* Mobile Menu Button */}
@@ -102,13 +107,15 @@ const Header = () => {
             >
               Contact
             </Link>
-            <Link
-              to="/dashboard"
+            <a
+              href={appUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setIsOpen(false)}
               className="bg-cyan-500 text-white font-bold px-6 py-3 rounded-lg hover:bg-cyan-600 transition-all duration-300 text-center"
             >
               Launch App
-            </Link>
+            </a>
           </nav>
         </div>
       )}

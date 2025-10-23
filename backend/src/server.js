@@ -21,6 +21,7 @@ const { initializeDatabase } = require("./database");
 const userRoutes = require("./userRoutes");
 const receiptRoutes = require("./receiptRoutes");
 const merchantRoutes = require("./merchantRoutes");
+const pointsRoutes = require("./pointsRoutes");
 
 const app = express();
 app.use(bodyParser.json({ limit: "10mb" }));
@@ -118,8 +119,12 @@ async function startServer() {
     // Add receipt routes
     app.use("/api/receipts", receiptRoutes);
 
-    // Add merchant routes
+    // Add merchant routes (both /merchant and /merchants for compatibility)
+    app.use("/api/merchant", merchantRoutes);
     app.use("/api/merchants", merchantRoutes);
+
+    // Add points routes
+    app.use("/api/points", pointsRoutes);
 
     // Add admin routes
     const { router: adminRoutes } = require("./adminRoutes");
@@ -127,6 +132,7 @@ async function startServer() {
 
     console.log("✅ User management system initialized");
     console.log("✅ Receipt management system initialized");
+    console.log("✅ Points reward system initialized");
     console.log("✅ Merchant management system initialized");
     console.log("✅ Admin management system initialized");
   } catch (error) {

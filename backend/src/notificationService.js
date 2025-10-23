@@ -201,6 +201,56 @@ class NotificationService {
     const stats = this.getConnectionStats();
     this.io.emit("connection_stats", stats);
   }
+
+  // Send points awarded notification
+  async sendPointsAwardedNotification(
+    userEmail,
+    userName,
+    pointsAwarded,
+    merchantName,
+    newBalance
+  ) {
+    try {
+      console.log(
+        `📧 Sending points notification to ${userName} (${pointsAwarded} points)`
+      );
+      // Note: Email sending would be integrated here with emailService if available
+      // For now, just log the notification
+
+      return {
+        success: true,
+        message: `Points notification sent to ${userName}`,
+      };
+    } catch (error) {
+      console.error("❌ Error sending points notification:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // Send real-time points notification via WebSocket
+  async sendPointsNotificationRealtime(userId, data) {
+    try {
+      if (this.connectedUsers.has(userId)) {
+        const socketId = this.connectedUsers.get(userId);
+
+        this.io.to(socketId).emit("points_awarded", {
+          type: "points_earned",
+          ...data,
+          timestamp: new Date().toISOString(),
+        });
+
+        console.log(`💰 Points notification sent to user ${userId}`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("❌ Error sending real-time points notification:", error);
+      return false;
+    }
+  }
 }
 
 // Singleton instance

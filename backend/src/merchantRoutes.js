@@ -7,6 +7,7 @@ const { authenticateToken } = require("./auth");
 const notificationService = require("./notificationService");
 const { NFTService } = require("./nftService");
 const { shouldMintNft, getNftSettings } = require("./adminRoutes");
+const { awardPoints, validatePointsTransaction } = require("./pointsService");
 
 const router = express.Router();
 
@@ -645,6 +646,42 @@ router.post("/pos/create-receipt", authenticateMerchant, async (req, res) => {
       [totalAmount, customerId]
     );
 
+    // Award points to customer (Phase 3: Loyalty System)
+    let pointsAwarded = null;
+    try {
+      const { awardPoints } = require("./pointsService");
+
+      pointsAwarded = await awardPoints(
+        customerId,
+        parseFloat(totalAmount),
+        req.merchant.id,
+        receiptData.id,
+        `Purchase at ${req.merchant.business_name}`
+      );
+
+      console.log(
+        `💰 Points awarded: ${pointsAwarded.pointsAwarded} points for $${totalAmount} purchase`
+      );
+      console.log(`🎯 New balance: ${pointsAwarded.newBalance} points`);
+      console.log(`🏆 Tier: ${pointsAwarded.newTier}`);
+
+      // Send points notification
+      try {
+        await notificationService.sendPointsAwardedNotification(
+          customer.email,
+          customer.display_name || customer.handle,
+          pointsAwarded.pointsAwarded,
+          req.merchant.business_name,
+          pointsAwarded.newBalance
+        );
+      } catch (notifError) {
+        console.error("Failed to send points notification:", notifError);
+      }
+    } catch (pointsError) {
+      console.error("❌ Error awarding points:", pointsError);
+      // Continue without points - receipt still created successfully
+    }
+
     // Prepare receipt notification data
     const receiptNotificationData = {
       id: receiptData.id,
@@ -760,9 +797,22 @@ router.post("/pos/create-receipt", authenticateMerchant, async (req, res) => {
         isVerified: true,
         nft: nftData,
       },
-      message: nftData
-        ? "Receipt created successfully with NFT collectible!"
-        : "Receipt created successfully and sent to customer",
+      points: pointsAwarded
+        ? {
+            awarded: pointsAwarded.pointsAwarded,
+            newBalance: pointsAwarded.newBalance,
+            tier: pointsAwarded.newTier,
+            tierChanged: pointsAwarded.tierChanged,
+          }
+        : null,
+      message:
+        nftData && pointsAwarded
+          ? `Receipt created with NFT collectible! ${pointsAwarded.pointsAwarded} points awarded! 🎉`
+          : pointsAwarded
+          ? `Receipt created! ${pointsAwarded.pointsAwarded} points awarded! 💰`
+          : nftData
+          ? "Receipt created successfully with NFT collectible!"
+          : "Receipt created successfully and sent to customer",
     });
   } catch (error) {
     console.error("Create receipt error:", error);
@@ -858,6 +908,227 @@ router.get("/dev/list", async (req, res) => {
   } catch (error) {
     console.error("List merchants error:", error);
     res.status(500).json({ error: "Failed to list merchants" });
+  }
+});
+
+/**
+ * POST /api/merchant/scan-qr
+ * Scan user QR code and award points
+ */
+router.post("/scan-qr", authenticateMerchant, async (req, res) => {
+  try {
+    const { qrData, purchaseAmount, receiptData } = req.body;
+    const merchant = req.merchant;
+
+    // Validate required fields
+    if (!qrData || !purchaseAmount) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        message: "QR data and purchase amount are required",
+      });
+    }
+
+    // Parse QR code data
+    let userId, accountId, timestamp, signature;
+    try {
+      const qrPayload = JSON.parse(qrData);
+      userId = qrPayload.userId;
+      accountId = qrPayload.accountId;
+      timestamp = qrPayload.timestamp;
+      signature = qrPayload.signature;
+    } catch (error) {
+      // If QR data is just a plain user ID string
+      userId = qrData;
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        error: "Invalid QR code",
+        message: "Could not extract user ID from QR code",
+      });
+    }
+
+    // Verify user exists
+    const userResult = await query(
+      "SELECT id, handle, display_name, email FROM users WHERE id = ?",
+      [userId]
+    );
+
+    if (!userResult.rows || userResult.rows.length === 0) {
+      return res.status(404).json({
+        error: "User not found",
+        message: "The scanned QR code is not associated with a valid user",
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Validate purchase amount
+    if (purchaseAmount <= 0 || purchaseAmount > 10000) {
+      return res.status(400).json({
+        error: "Invalid purchase amount",
+        message: "Purchase amount must be between $0.01 and $10,000",
+      });
+    }
+
+    // Validate transaction (anti-fraud checks)
+    const validation = await validatePointsTransaction(
+      userId,
+      merchant.id,
+      parseFloat(purchaseAmount)
+    );
+
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: "Transaction validation failed",
+        reason: validation.reason,
+      });
+    }
+
+    // Create receipt record if receipt data provided
+    let receiptId = null;
+    if (receiptData) {
+      const receiptResult = await query(
+        `INSERT INTO receipts 
+         (user_id, merchant_id, store_name, amount, receipt_date, category, items) 
+         VALUES (?, ?, ?, ?, CURRENT_DATE, ?, ?)`,
+        [
+          userId,
+          merchant.id,
+          merchant.business_name,
+          purchaseAmount,
+          receiptData.category || "other",
+          JSON.stringify(receiptData.items || []),
+        ]
+      );
+      receiptId = receiptResult.lastID || receiptResult.rows[0]?.id;
+    }
+
+    // Award points
+    const pointsResult = await awardPoints(
+      userId,
+      parseFloat(purchaseAmount),
+      merchant.id,
+      receiptId,
+      `Purchase at ${merchant.business_name}`
+    );
+
+    // Update merchant's receipt count
+    await query(
+      `UPDATE merchants 
+       SET receipts_processed = receipts_processed + 1,
+           last_activity = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [merchant.id]
+    );
+
+    // Send notification to user
+    try {
+      await notificationService.sendPointsAwardedNotification(
+        user.email,
+        user.display_name || user.handle,
+        pointsResult.pointsAwarded,
+        merchant.business_name,
+        pointsResult.newBalance
+      );
+    } catch (notifError) {
+      console.error("Failed to send notification:", notifError);
+      // Don't fail the request if notification fails
+    }
+
+    res.json({
+      success: true,
+      message: "Points awarded successfully",
+      data: {
+        user: {
+          id: user.id,
+          handle: user.handle,
+          displayName: user.display_name,
+        },
+        points: {
+          awarded: pointsResult.pointsAwarded,
+          newBalance: pointsResult.newBalance,
+          tier: pointsResult.newTier,
+          tierChanged: pointsResult.tierChanged,
+        },
+        receipt: receiptId ? { id: receiptId } : null,
+        purchaseAmount,
+      },
+    });
+  } catch (error) {
+    console.error("QR scan error:", error);
+    res.status(500).json({
+      error: "Failed to process QR scan",
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/merchant/rewards-stats
+ * Get merchant's rewards distribution statistics
+ */
+router.get("/rewards-stats", authenticateMerchant, async (req, res) => {
+  try {
+    const merchant = req.merchant;
+
+    // Get merchant rewards data
+    const rewardsResult = await query(
+      "SELECT * FROM merchant_rewards WHERE merchant_id = ?",
+      [merchant.id]
+    );
+
+    const rewardsData =
+      rewardsResult.rows.length > 0
+        ? rewardsResult.rows[0]
+        : {
+            total_points_distributed: 0,
+            total_transactions: 0,
+            reward_rate: 1.0,
+          };
+
+    // Get recent transactions
+    const recentTransactions = await query(
+      `SELECT pt.*, u.handle as user_handle
+       FROM points_transactions pt
+       JOIN users u ON pt.user_id = u.id
+       WHERE pt.merchant_id = ?
+       ORDER BY pt.created_at DESC
+       LIMIT 10`,
+      [merchant.id]
+    );
+
+    // Get top customers (anonymized)
+    const topCustomers = await query(
+      `SELECT u.handle, COUNT(*) as visit_count, SUM(pt.amount) as total_points
+       FROM points_transactions pt
+       JOIN users u ON pt.user_id = u.id
+       WHERE pt.merchant_id = ?
+       GROUP BY pt.user_id, u.handle
+       ORDER BY total_points DESC
+       LIMIT 5`,
+      [merchant.id]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalPointsDistributed: rewardsData.total_points_distributed || 0,
+          totalTransactions: rewardsData.total_transactions || 0,
+          rewardRate: rewardsData.reward_rate || 1.0,
+          lastAwardAt: rewardsData.last_award_at,
+        },
+        recentTransactions: recentTransactions.rows || [],
+        topCustomers: topCustomers.rows || [],
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching merchant rewards stats:", error);
+    res.status(500).json({
+      error: "Failed to fetch rewards statistics",
+      message: error.message,
+    });
   }
 });
 
