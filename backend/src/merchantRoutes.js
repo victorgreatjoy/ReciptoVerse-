@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const { query } = require("./database");
+const { query, pool } = require("./database");
 const { authenticateToken } = require("./auth");
 const notificationService = require("./notificationService");
 const { NFTService } = require("./nftService");
@@ -149,7 +149,7 @@ router.post("/register", async (req, res) => {
         postal_code, country, tax_id, website_url, contact_person, 
         api_key, terminal_id, subscription_plan, status, user_id
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
-      ${query.pool ? "RETURNING id, business_name, terminal_id, status" : ""}
+      ${pool ? "RETURNING id, business_name, terminal_id, status" : ""}
     `,
       [
         businessName,
@@ -172,7 +172,7 @@ router.post("/register", async (req, res) => {
     );
 
     let merchantData;
-    if (query.pool) {
+    if (pool) {
       merchantData = result.rows[0];
     } else {
       // SQLite - get the inserted merchant
@@ -299,7 +299,7 @@ router.put("/profile", authenticateMerchant, async (req, res) => {
         postal_code = COALESCE(?, postal_code),
         website_url = COALESCE(?, website_url),
         contact_person = COALESCE(?, contact_person),
-        updated_at = ${query.pool ? "NOW()" : "CURRENT_TIMESTAMP"}
+        updated_at = ${pool ? "NOW()" : "CURRENT_TIMESTAMP"}
       WHERE id = ?
     `,
       [
@@ -351,9 +351,7 @@ router.get("/stats", authenticateMerchant, async (req, res) => {
       FROM receipts 
       WHERE merchant_id = ? 
         AND created_at >= ${
-          query.pool
-            ? "NOW() - INTERVAL '30 days'"
-            : "datetime('now', '-30 days')"
+          pool ? "NOW() - INTERVAL '30 days'" : "datetime('now', '-30 days')"
         }
       GROUP BY DATE(created_at)
       ORDER BY date DESC
@@ -465,7 +463,7 @@ router.post(
       SET 
         status = 'approved',
         approved_by = ?,
-        approved_at = ${query.pool ? "NOW()" : "CURRENT_TIMESTAMP"}
+        approved_at = ${pool ? "NOW()" : "CURRENT_TIMESTAMP"}
       WHERE id = ?
     `,
         [req.user.id, merchantId]
@@ -607,10 +605,8 @@ router.post("/pos/create-receipt", authenticateMerchant, async (req, res) => {
       INSERT INTO receipts (
         user_id, merchant_id, store_name, amount, receipt_date, category, 
         items, is_verified, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ${
-        query.pool ? "NOW()" : "CURRENT_TIMESTAMP"
-      })
-      ${query.pool ? "RETURNING id, created_at" : ""}
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ${pool ? "NOW()" : "CURRENT_TIMESTAMP"})
+      ${pool ? "RETURNING id, created_at" : ""}
     `,
       [
         customerId,
@@ -625,7 +621,7 @@ router.post("/pos/create-receipt", authenticateMerchant, async (req, res) => {
     );
 
     let receiptData;
-    if (query.pool) {
+    if (pool) {
       receiptData = receiptResult.rows[0];
     } else {
       // SQLite - get the inserted receipt
@@ -887,7 +883,7 @@ router.get("/dev/approve/:merchantId", async (req, res) => {
       UPDATE merchants 
       SET 
         status = 'approved',
-        approved_at = ${query.pool ? "NOW()" : "CURRENT_TIMESTAMP"}
+        approved_at = ${pool ? "NOW()" : "CURRENT_TIMESTAMP"}
       WHERE id = ?
     `,
       [merchantId]
