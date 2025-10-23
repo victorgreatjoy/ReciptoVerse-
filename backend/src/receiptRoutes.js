@@ -4,6 +4,20 @@ const { query } = require("./database");
 const { authenticateToken } = require("./auth");
 const Joi = require("joi");
 
+// Helper function to parse items - handles both PostgreSQL JSONB and SQLite TEXT
+const parseReceiptItems = (items) => {
+  if (!items) return [];
+  if (typeof items === "string") {
+    try {
+      return JSON.parse(items);
+    } catch (e) {
+      console.error("Error parsing items JSON:", e);
+      return [];
+    }
+  }
+  return items; // Already an object (PostgreSQL JSONB)
+};
+
 // Receipt validation schemas
 const createReceiptSchema = Joi.object({
   storeName: Joi.string().required().max(100),
@@ -225,7 +239,7 @@ router.post("/", authenticateToken, async (req, res) => {
         amount: parseFloat(receipt.amount),
         receiptDate: receipt.receipt_date,
         category: receipt.category,
-        items: JSON.parse(receipt.items || "[]"),
+        items: parseReceiptItems(receipt.items),
         isVerified: receipt.is_verified,
         nftCreated: receipt.nft_created,
         createdAt: receipt.created_at,
@@ -324,7 +338,7 @@ router.get("/", authenticateToken, async (req, res) => {
       amount: parseFloat(receipt.amount),
       receiptDate: receipt.receipt_date,
       category: receipt.category,
-      items: JSON.parse(receipt.items || "[]"),
+      items: parseReceiptItems(receipt.items),
       isVerified: receipt.is_verified,
       nftCreated: receipt.nft_created,
       nftTokenId: receipt.nft_token_id,
@@ -391,7 +405,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
         amount: parseFloat(receipt.amount),
         receiptDate: receipt.receipt_date,
         category: receipt.category,
-        items: JSON.parse(receipt.items || "[]"),
+        items: parseReceiptItems(receipt.items),
         merchantId: receipt.merchant_id,
         barcodeData: receipt.barcode_data,
         isVerified: receipt.is_verified,
@@ -578,7 +592,7 @@ router.get("/nft-gallery", authenticateToken, async (req, res) => {
 
     const nftReceipts = nftReceiptsResult.rows.map((receipt) => ({
       ...receipt,
-      items: receipt.items ? JSON.parse(receipt.items) : [],
+      items: parseReceiptItems(receipt.items),
     }));
 
     console.log(`✅ Found ${nftReceipts.length} NFT receipts for user`);
