@@ -50,7 +50,7 @@ const MerchantDashboard = () => {
 
         // Fetch rewards statistics
         try {
-          const rewardsData = await getMerchantRewardsStats();
+          const rewardsData = await getMerchantRewardsStats(key);
           setRewardsStats(rewardsData);
         } catch {
           console.log("Rewards stats not available yet");
@@ -74,7 +74,7 @@ const MerchantDashboard = () => {
 
   const loadRewardsStats = async () => {
     try {
-      const data = await getMerchantRewardsStats();
+      const data = await getMerchantRewardsStats(user?.merchantApiKey);
       setRewardsStats(data);
     } catch (error) {
       console.error("Error loading rewards stats:", error);

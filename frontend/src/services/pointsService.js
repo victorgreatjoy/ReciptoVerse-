@@ -105,14 +105,21 @@ export const awardPoints = async (userId, purchaseAmount, description = "") => {
  * @param {object} qrData - QR code data
  * @param {number} purchaseAmount - Purchase amount
  * @param {object} receiptData - Optional receipt data
+ * @param {string} merchantApiKey - Merchant API key (optional, will try localStorage if not provided)
  */
 export const scanQRAndAwardPoints = async (
   qrData,
   purchaseAmount,
-  receiptData = null
+  receiptData = null,
+  merchantApiKey = null
 ) => {
   try {
-    const merchantApiKey = localStorage.getItem("merchantApiKey");
+    const apiKey = merchantApiKey || localStorage.getItem("merchantApiKey");
+
+    if (!apiKey) {
+      throw new Error("Merchant API key is required");
+    }
+
     const response = await axios.post(
       `${API_URL}/api/merchant/scan-qr`,
       {
@@ -122,7 +129,7 @@ export const scanQRAndAwardPoints = async (
       },
       {
         headers: {
-          "x-api-key": merchantApiKey,
+          "x-api-key": apiKey,
           "Content-Type": "application/json",
         },
       }
@@ -136,13 +143,21 @@ export const scanQRAndAwardPoints = async (
 
 /**
  * Get merchant rewards statistics
+ * @param {string} merchantApiKey - Merchant API key (optional, will try localStorage if not provided)
  */
-export const getMerchantRewardsStats = async () => {
+export const getMerchantRewardsStats = async (merchantApiKey = null) => {
   try {
-    const merchantApiKey = localStorage.getItem("merchantApiKey");
+    const apiKey = merchantApiKey || localStorage.getItem("merchantApiKey");
+
+    if (!apiKey) {
+      throw new Error(
+        "Merchant API key not found. Please ensure you're logged in as a merchant."
+      );
+    }
+
     const response = await axios.get(`${API_URL}/api/merchant/rewards-stats`, {
       headers: {
-        "x-api-key": merchantApiKey,
+        "x-api-key": apiKey,
       },
     });
     return response.data;

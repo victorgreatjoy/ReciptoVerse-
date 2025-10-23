@@ -17,8 +17,10 @@ import { scanQRAndAwardPoints } from "../services/pointsService";
 import { showToast } from "../utils/toastUtils";
 import confetti from "canvas-confetti";
 import { Html5QrcodeScanner } from "html5-qrcode";
+import { useUser } from "../contexts/UserContext";
 
 const MerchantQRScanner = () => {
+  const { user } = useUser();
   const [scannerMode, setScannerMode] = useState("camera"); // 'camera' or 'manual'
   const [purchaseAmount, setPurchaseAmount] = useState("");
   const [receiptNotes, setReceiptNotes] = useState("");
@@ -107,7 +109,8 @@ const MerchantQRScanner = () => {
       const response = await scanQRAndAwardPoints(
         qrData,
         parseFloat(purchaseAmount),
-        receiptData
+        receiptData,
+        user?.merchantApiKey
       );
 
       setResult(response);
