@@ -14,6 +14,8 @@ import NotificationCenter from "./NotificationCenter";
 import AdminDashboard from "./AdminDashboard";
 import HashConnectButton from "./HashConnectButton";
 import { LoadingSpinner, Button, Badge } from "./ui";
+import AIChatButton from "./features/ai-support/AIChatButton";
+import AISupportChat from "./features/ai-support/AISupportChat";
 import {
   UserIcon,
   ArrowRightOnRectangleIcon,
@@ -41,6 +43,7 @@ const AppContent = () => {
   const [currentView, setCurrentView] = useState("qrcode"); // qrcode, receipts, dashboard, gallery, merchant, merchant-dashboard, pos, test-helper
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
+  const [aiChatOpen, setAiChatOpen] = useState(false);
 
   // API Configuration for deployment
   const API_BASE = import.meta.env.PROD
@@ -504,6 +507,24 @@ const AppContent = () => {
           )}
         </main>
       </div>
+
+      {/* AI Support Chat - Only show when authenticated */}
+      {isAuthenticated && user && (
+        <>
+          <AIChatButton onClick={() => setAiChatOpen(true)} />
+          <AISupportChat
+            isOpen={aiChatOpen}
+            onClose={() => setAiChatOpen(false)}
+            userContext={{
+              currentView: currentView,
+              userType: user?.isMerchant ? "merchant" : "customer",
+              hasWallet: !!user?.accountId,
+              pointsBalance: user?.pointsBalance,
+              loyaltyTier: user?.loyaltyTier,
+            }}
+          />
+        </>
+      )}
     </div>
   );
 };
