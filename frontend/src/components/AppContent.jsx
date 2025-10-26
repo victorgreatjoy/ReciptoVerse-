@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useUser } from "../contexts/UserContext";
 import ReceiptCreator from "./ReceiptCreator";
-import NFTGallery from "./NFTGallery";
 import UserDashboard from "./UserDashboard";
 import ReceiptDashboard from "./ReceiptDashboard";
 import UserQRCode from "./UserQRCode";
@@ -322,16 +321,6 @@ const AppContent = () => {
                     </button>
                     <button
                       className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                        currentView === "gallery"
-                          ? "border-primary-500 text-primary-600"
-                          : "border-transparent text-earth-500 hover:text-earth-700 hover:border-earth-300"
-                      }`}
-                      onClick={() => setCurrentView("gallery")}
-                    >
-                      🎨 NFT Gallery
-                    </button>
-                    <button
-                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
                         currentView === "nft-marketplace"
                           ? "border-primary-500 text-primary-600"
                           : "border-transparent text-earth-500 hover:text-earth-700 hover:border-earth-300"
@@ -350,16 +339,18 @@ const AppContent = () => {
                     >
                       💎 My NFTs
                     </button>
-                    <button
-                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                        currentView === "merchant"
-                          ? "border-primary-500 text-primary-600"
-                          : "border-transparent text-earth-500 hover:text-earth-700 hover:border-earth-300"
-                      }`}
-                      onClick={() => setCurrentView("merchant")}
-                    >
-                      🏪 Be a Merchant
-                    </button>
+                    {!user?.isMerchant && (
+                      <button
+                        className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
+                          currentView === "merchant"
+                            ? "border-primary-500 text-primary-600"
+                            : "border-transparent text-earth-500 hover:text-earth-700 hover:border-earth-300"
+                        }`}
+                        onClick={() => setCurrentView("merchant")}
+                      >
+                        🏪 Be a Merchant
+                      </button>
+                    )}
                     {user?.isMerchant && (
                       <button
                         className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
@@ -391,12 +382,6 @@ const AppContent = () => {
                 {currentView === "qrcode" && <UserQRCode />}
                 {currentView === "receipts" && <ReceiptDashboard />}
                 {currentView === "dashboard" && <UserDashboard />}
-                {currentView === "gallery" && (
-                  <NFTGallery
-                    apiBase={API_BASE}
-                    lastMintedNFT={lastMintedNFT}
-                  />
-                )}
                 {currentView === "nft-marketplace" && <NFTMarketplace />}
                 {currentView === "my-nfts" && <MyNFTCollection />}
                 {currentView === "merchant" && <MerchantRegistration />}
