@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const API_URL = `${
+  import.meta.env.VITE_API_URL || "http://localhost:3000"
+}/api`;
 
 // Get auth token from localStorage
 const getAuthToken = () => {
@@ -29,7 +31,7 @@ axiosInstance.interceptors.request.use((config) => {
  */
 export const getLoyaltyTiers = async () => {
   try {
-    const response = await axiosInstance.get("/api/points/tiers");
+    const response = await axiosInstance.get("/points/tiers");
     return response.data;
   } catch (error) {
     console.error("Error fetching loyalty tiers:", error);
@@ -42,7 +44,7 @@ export const getLoyaltyTiers = async () => {
  */
 export const getPointsBalance = async () => {
   try {
-    const response = await axiosInstance.get("/api/points/balance");
+    const response = await axiosInstance.get("/points/balance");
     return response.data;
   } catch (error) {
     console.error("Error fetching points balance:", error);
@@ -58,7 +60,7 @@ export const getPointsBalance = async () => {
 export const getPointsHistory = async (limit = 50, offset = 0) => {
   try {
     const response = await axiosInstance.get(
-      `/api/points/history?limit=${limit}&offset=${offset}`
+      `/points/history?limit=${limit}&offset=${offset}`
     );
     return response.data;
   } catch (error) {
@@ -72,7 +74,7 @@ export const getPointsHistory = async (limit = 50, offset = 0) => {
  */
 export const getPointsStats = async () => {
   try {
-    const response = await axiosInstance.get("/api/points/stats");
+    const response = await axiosInstance.get("/points/stats");
     return response.data;
   } catch (error) {
     console.error("Error fetching points stats:", error);
@@ -88,7 +90,7 @@ export const getPointsStats = async () => {
  */
 export const awardPoints = async (userId, purchaseAmount, description = "") => {
   try {
-    const response = await axiosInstance.post("/api/points/award", {
+    const response = await axiosInstance.post("/points/award", {
       userId,
       purchaseAmount,
       description,
@@ -121,7 +123,7 @@ export const scanQRAndAwardPoints = async (
     }
 
     const response = await axios.post(
-      `${API_URL}/api/merchant/scan-qr`,
+      `${API_URL}/merchant/scan-qr`,
       {
         qrData,
         purchaseAmount,
@@ -155,7 +157,7 @@ export const getMerchantRewardsStats = async (merchantApiKey = null) => {
       );
     }
 
-    const response = await axios.get(`${API_URL}/api/merchant/rewards-stats`, {
+    const response = await axios.get(`${API_URL}/merchant/rewards-stats`, {
       headers: {
         "x-api-key": apiKey,
       },

@@ -743,4 +743,96 @@ router.post("/generate-missing-qr", authenticateToken, async (req, res) => {
   }
 });
 
+// Connect Hedera wallet
+router.post("/connect-wallet", authenticateToken, async (req, res) => {
+  try {
+    console.log("🔌 Wallet connect request received:", {
+      userId: req.user.id,
+      body: req.body,
+    });
+
+    const { accountId } = req.body;
+    const userId = req.user.id;
+
+    if (!accountId) {
+      console.log("❌ No account ID provided");
+      return res.status(400).json({ error: "Account ID is required" });
+    }
+
+    // Validate Hedera account ID format (e.g., 0.0.12345)
+    const accountIdRegex = /^0\.0\.\d+$/;
+    if (!accountIdRegex.test(accountId)) {
+      console.log("❌ Invalid account ID format:", accountId);
+      return res.status(400).json({
+        error: "Invalid Hedera account ID format. Expected format: 0.0.12345",
+      });
+    }
+
+    // Update user's hedera_account_id
+    await query("UPDATE users SET hedera_account_id = $1 WHERE id = $2", [
+      accountId,
+      userId,
+    ]);
+
+    console.log(`✅ Wallet connected: ${accountId} for user ${userId}`);
+
+    res.json({
+      success: true,
+      message: "Wallet connected successfully",
+      accountId,
+    });
+  } catch (error) {
+    console.error("Wallet connection error:", error);
+    res.status(500).json({ error: "Failed to connect wallet" });
+  }
+});
+
+// Disconnect Hedera wallet
+router.post("/disconnect-wallet", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await query("UPDATE users SET hedera_account_id = NULL WHERE id = $1", [
+      userId,
+    ]);
+
+    console.log(`✅ Wallet disconnected for user ${userId}`);
+
+    res.json({
+      success: true,
+      message: "Wallet disconnected successfully",
+    });
+  } catch (error) {
+    console.error("Wallet disconnection error:", error);
+    res.status(500).json({ error: "Failed to disconnect wallet" });
+  }
+});
+
+// Get wallet status
+router.get("/wallet-status", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const result = await query(
+      "SELECT hedera_account_id FROM users WHERE id = $1",
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const accountId = result.rows[0].hedera_account_id;
+
+    res.json({
+      success: true,
+      connected: !!accountId,
+      accountId: accountId || null,
+    });
+  } catch (error) {
+    console.error("Wallet status error:", error);
+    res.status(500).json({ error: "Failed to get wallet status" });
+  }
+});
+
 module.exports = router;

@@ -160,6 +160,32 @@ async function initializeDatabase() {
 
     await query(usersTableSQL);
 
+    // Add hedera_account_id column if it doesn't exist
+    try {
+      if (pool) {
+        // PostgreSQL
+        await query(`
+          ALTER TABLE users 
+          ADD COLUMN IF NOT EXISTS hedera_account_id VARCHAR(50)
+        `);
+      } else {
+        // SQLite - check if column exists first
+        const tableInfo = await query("PRAGMA table_info(users)");
+        const hasColumn = tableInfo.rows.some(
+          (col) => col.name === "hedera_account_id"
+        );
+        if (!hasColumn) {
+          await query(`ALTER TABLE users ADD COLUMN hedera_account_id TEXT`);
+        }
+      }
+      console.log("✅ hedera_account_id column added/verified");
+    } catch (error) {
+      console.log(
+        "ℹ️  hedera_account_id column may already exist:",
+        error.message
+      );
+    }
+
     // Receipts table with categories
     const receiptsTableSQL = pool
       ? `
@@ -379,6 +405,132 @@ async function initializeDatabase() {
 
     await query(merchantRewardsTableSQL);
 
+    // NFT Types Table - Merchant-created NFT templates
+    const nftTypesTableSQL = pool
+      ? `
+      CREATE TABLE IF NOT EXISTS nft_types (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        merchant_id UUID REFERENCES merchants(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        animal_type VARCHAR(50) NOT NULL,
+        tier INTEGER DEFAULT 1,
+        point_cost INTEGER NOT NULL,
+        rarity VARCHAR(50) DEFAULT 'common',
+        image_url TEXT NOT NULL,
+        image_ipfs_hash TEXT,
+        benefits JSONB DEFAULT '[]',
+        discount_percentage DECIMAL(5,2) DEFAULT 0,
+        monthly_bonus_points INTEGER DEFAULT 0,
+        max_supply INTEGER DEFAULT -1,
+        current_supply INTEGER DEFAULT 0,
+        metadata_template JSONB DEFAULT '{}',
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `
+      : `
+      CREATE TABLE IF NOT EXISTS nft_types (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        merchant_id TEXT REFERENCES merchants(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        description TEXT,
+        animal_type TEXT NOT NULL,
+        tier INTEGER DEFAULT 1,
+        point_cost INTEGER NOT NULL,
+        rarity TEXT DEFAULT 'common',
+        image_url TEXT NOT NULL,
+        image_ipfs_hash TEXT,
+        benefits TEXT DEFAULT '[]',
+        discount_percentage REAL DEFAULT 0,
+        monthly_bonus_points INTEGER DEFAULT 0,
+        max_supply INTEGER DEFAULT -1,
+        current_supply INTEGER DEFAULT 0,
+        metadata_template TEXT DEFAULT '{}',
+        is_active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    await query(nftTypesTableSQL);
+
+    // User NFT Mints Table - Track minted NFTs
+    const userNftMintsTableSQL = pool
+      ? `
+      CREATE TABLE IF NOT EXISTS user_nft_mints (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        nft_type_id UUID REFERENCES nft_types(id) ON DELETE CASCADE,
+        merchant_id UUID REFERENCES merchants(id) ON DELETE CASCADE,
+        nft_token_id VARCHAR(100),
+        serial_number INTEGER,
+        points_spent INTEGER NOT NULL,
+        metadata_url TEXT,
+        benefits_active BOOLEAN DEFAULT TRUE,
+        benefits_expiry TIMESTAMP,
+        last_benefit_claim TIMESTAMP,
+        minted_at TIMESTAMP DEFAULT NOW(),
+        transferred_at TIMESTAMP,
+        transferred_to UUID
+      )
+    `
+      : `
+      CREATE TABLE IF NOT EXISTS user_nft_mints (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        nft_type_id TEXT REFERENCES nft_types(id) ON DELETE CASCADE,
+        merchant_id TEXT REFERENCES merchants(id) ON DELETE CASCADE,
+        nft_token_id TEXT,
+        serial_number INTEGER,
+        points_spent INTEGER NOT NULL,
+        metadata_url TEXT,
+        benefits_active INTEGER DEFAULT 1,
+        benefits_expiry DATETIME,
+        last_benefit_claim DATETIME,
+        minted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        transferred_at DATETIME,
+        transferred_to TEXT
+      )
+    `;
+
+    await query(userNftMintsTableSQL);
+
+    // NFT Benefits Redemptions Table - Track benefit usage
+    const nftBenefitRedemptionsTableSQL = pool
+      ? `
+      CREATE TABLE IF NOT EXISTS nft_benefit_redemptions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        nft_mint_id UUID REFERENCES user_nft_mints(id) ON DELETE CASCADE,
+        benefit_type VARCHAR(50) NOT NULL,
+        benefit_value VARCHAR(255),
+        receipt_id UUID REFERENCES receipts(id) ON DELETE SET NULL,
+        points_awarded INTEGER DEFAULT 0,
+        discount_applied DECIMAL(10,2) DEFAULT 0,
+        redeemed_at TIMESTAMP DEFAULT NOW()
+      )
+    `
+      : `
+      CREATE TABLE IF NOT EXISTS nft_benefit_redemptions (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        nft_mint_id TEXT REFERENCES user_nft_mints(id) ON DELETE CASCADE,
+        benefit_type TEXT NOT NULL,
+        benefit_value TEXT,
+        receipt_id TEXT REFERENCES receipts(id) ON DELETE SET NULL,
+        points_awarded INTEGER DEFAULT 0,
+        discount_applied REAL DEFAULT 0,
+        redeemed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    await query(nftBenefitRedemptionsTableSQL);
+
+    // Seed initial NFT types (3 animals with different tiers)
+    await seedInitialNFTTypes();
+
     // Create indexes for better performance
     if (pool) {
       // PostgreSQL indexes
@@ -419,6 +571,30 @@ async function initializeDatabase() {
       await query(
         "CREATE INDEX IF NOT EXISTS idx_merchant_rewards_merchant_id ON merchant_rewards(merchant_id)"
       );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_nft_types_merchant_id ON nft_types(merchant_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_nft_types_animal_type ON nft_types(animal_type)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_nft_types_is_active ON nft_types(is_active)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_user_nft_mints_user_id ON user_nft_mints(user_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_user_nft_mints_nft_type_id ON user_nft_mints(nft_type_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_user_nft_mints_merchant_id ON user_nft_mints(merchant_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_nft_benefit_redemptions_user_id ON nft_benefit_redemptions(user_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_nft_benefit_redemptions_nft_mint_id ON nft_benefit_redemptions(nft_mint_id)"
+      );
     } else {
       // SQLite indexes
       await query(
@@ -457,6 +633,30 @@ async function initializeDatabase() {
       );
       await query(
         "CREATE INDEX IF NOT EXISTS idx_merchant_rewards_merchant_id ON merchant_rewards(merchant_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_nft_types_merchant_id ON nft_types(merchant_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_nft_types_animal_type ON nft_types(animal_type)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_nft_types_is_active ON nft_types(is_active)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_user_nft_mints_user_id ON user_nft_mints(user_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_user_nft_mints_nft_type_id ON user_nft_mints(nft_type_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_user_nft_mints_merchant_id ON user_nft_mints(merchant_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_nft_benefit_redemptions_user_id ON nft_benefit_redemptions(user_id)"
+      );
+      await query(
+        "CREATE INDEX IF NOT EXISTS idx_nft_benefit_redemptions_nft_mint_id ON nft_benefit_redemptions(nft_mint_id)"
       );
     }
 
@@ -640,6 +840,159 @@ async function initializeDatabase() {
   } catch (error) {
     console.error("❌ Database initialization error:", error);
     throw error;
+  }
+}
+
+/**
+ * Seed initial NFT types - 3 animals with different tiers
+ * This creates default NFT templates that can be used by merchants
+ */
+async function seedInitialNFTTypes() {
+  try {
+    console.log("🌱 Seeding initial NFT types...");
+
+    // Check if we already have NFT types
+    const existingTypes = await query(
+      "SELECT COUNT(*) as count FROM nft_types"
+    );
+
+    // The database wrapper returns { rows: [...] } for both PostgreSQL and SQLite
+    const count = parseInt(existingTypes.rows[0].count) || 0;
+
+    if (count > 0) {
+      console.log(
+        `ℹ️ NFT types already seeded (${count} types found), skipping...`
+      );
+      return;
+    }
+
+    // Default NFT types - 3 animals with different characteristics
+    const nftTypes = [
+      {
+        name: "Bronze Rabbit NFT",
+        description:
+          "A cute bronze rabbit that brings luck and small rewards. Perfect for beginners on their ReceiptoVerse journey!",
+        animal_type: "rabbit",
+        tier: 1,
+        point_cost: 500,
+        rarity: "common",
+        image_url: "https://i.imgur.com/rabbit-bronze.png",
+        benefits: JSON.stringify([
+          "5% discount on purchases",
+          "50 bonus points on first use",
+          "Access to Bronze tier events",
+        ]),
+        discount_percentage: 5.0,
+        monthly_bonus_points: 50,
+        max_supply: -1, // unlimited
+        metadata_template: JSON.stringify({
+          category: "Starter",
+          speed: 3,
+          luck: 5,
+          power: 2,
+        }),
+      },
+      {
+        name: "Silver Fox NFT",
+        description:
+          "A clever silver fox with enhanced rewards and exclusive perks. For savvy shoppers who want more!",
+        animal_type: "fox",
+        tier: 2,
+        point_cost: 1500,
+        rarity: "rare",
+        image_url: "https://i.imgur.com/fox-silver.png",
+        benefits: JSON.stringify([
+          "10% discount on purchases",
+          "150 bonus points monthly",
+          "Priority customer support",
+          "Access to Silver tier events",
+          "Free shipping once per month",
+        ]),
+        discount_percentage: 10.0,
+        monthly_bonus_points: 150,
+        max_supply: 1000,
+        metadata_template: JSON.stringify({
+          category: "Advanced",
+          speed: 7,
+          luck: 7,
+          power: 6,
+          cunning: 8,
+        }),
+      },
+      {
+        name: "Gold Eagle NFT",
+        description:
+          "A majestic gold eagle soaring above the rest. Premium benefits for true ReceiptoVerse champions!",
+        animal_type: "eagle",
+        tier: 3,
+        point_cost: 3000,
+        rarity: "epic",
+        image_url: "https://i.imgur.com/eagle-gold.png",
+        benefits: JSON.stringify([
+          "20% discount on all purchases",
+          "500 bonus points monthly",
+          "VIP customer support",
+          "Access to exclusive Gold events",
+          "Free shipping unlimited",
+          "Early access to new features",
+          "Double points on purchases",
+        ]),
+        discount_percentage: 20.0,
+        monthly_bonus_points: 500,
+        max_supply: 100,
+        metadata_template: JSON.stringify({
+          category: "Elite",
+          speed: 10,
+          luck: 9,
+          power: 10,
+          cunning: 8,
+          prestige: 10,
+        }),
+      },
+    ];
+
+    // Insert NFT types (without merchant_id for now - they're global defaults)
+    for (const nftType of nftTypes) {
+      const insertSQL = pool
+        ? `
+          INSERT INTO nft_types (
+            name, description, animal_type, tier, point_cost, rarity,
+            image_url, benefits, discount_percentage, monthly_bonus_points,
+            max_supply, metadata_template, is_active
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        `
+        : `
+          INSERT INTO nft_types (
+            name, description, animal_type, tier, point_cost, rarity,
+            image_url, benefits, discount_percentage, monthly_bonus_points,
+            max_supply, metadata_template, is_active
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+      const params = [
+        nftType.name,
+        nftType.description,
+        nftType.animal_type,
+        nftType.tier,
+        nftType.point_cost,
+        nftType.rarity,
+        nftType.image_url,
+        nftType.benefits,
+        nftType.discount_percentage,
+        nftType.monthly_bonus_points,
+        nftType.max_supply,
+        nftType.metadata_template,
+        pool ? true : 1,
+      ];
+
+      await query(insertSQL, params);
+      console.log(`✅ Created NFT type: ${nftType.name}`);
+    }
+
+    console.log("🎉 Initial NFT types seeded successfully!");
+  } catch (error) {
+    console.error("❌ Error seeding NFT types:", error);
+    // Don't throw - this is not critical for app startup
   }
 }
 

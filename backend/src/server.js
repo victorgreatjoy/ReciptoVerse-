@@ -23,6 +23,7 @@ const receiptRoutes = require("./receiptRoutes");
 const merchantRoutes = require("./merchantRoutes");
 const pointsRoutes = require("./pointsRoutes");
 const aiSupportRoutes = require("./aiSupportRoutes");
+const nftRoutes = require("./nftRoutes");
 
 const app = express();
 app.use(bodyParser.json({ limit: "10mb" }));
@@ -130,6 +131,9 @@ async function startServer() {
     // Add AI support routes
     app.use("/api/ai-support", aiSupportRoutes);
 
+    // Add NFT routes
+    app.use("/api/nft", nftRoutes);
+
     // Add admin routes
     const { router: adminRoutes } = require("./adminRoutes");
     app.use("/api/admin", adminRoutes);
@@ -138,6 +142,7 @@ async function startServer() {
     console.log("✅ Receipt management system initialized");
     console.log("✅ Points reward system initialized");
     console.log("✅ AI Support system initialized");
+    console.log("✅ NFT Rewards system initialized");
     console.log("✅ Merchant management system initialized");
     console.log("✅ Admin management system initialized");
   } catch (error) {

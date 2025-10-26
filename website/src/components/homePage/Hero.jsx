@@ -8,7 +8,7 @@ const Hero = ({ onJoinWaitlist }) => {
   // The local state for the modal has been removed from this component.
 
   return (
-    <section className="relative text-white pt-2 py-28 sm:py-32 md:py-40">
+    <section className="relative text-white py-28 sm:py-32 md:py-40">
       <div className="container mx-auto px-6 text-center relative z-10">
         <img
           className="mx-auto"

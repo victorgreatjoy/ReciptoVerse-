@@ -26,12 +26,42 @@ const useHashConnect = () => {
         const instance = getHashConnectInstance();
 
         // Set up event listeners
-        const handlePairing = (pairingData) => {
+        const handlePairing = async (pairingData) => {
           console.log("🔗 Pairing Event:", pairingData);
           dispatch(setLoading(false));
           const accountIds = getConnectedAccountIds();
           if (accountIds && accountIds.length > 0) {
-            dispatch(setConnect(accountIds[0].toString()));
+            const accountId = accountIds[0].toString();
+            dispatch(setConnect(accountId));
+
+            // Sync with backend for NFT minting
+            try {
+              const jwt = localStorage.getItem("receiptoverse_token");
+              if (jwt) {
+                const API_BASE =
+                  import.meta.env.VITE_API_URL || "http://localhost:3000";
+                const url = `${API_BASE}/api/users/connect-wallet`;
+                console.log("🔌 Syncing wallet to backend:", accountId);
+                const res = await fetch(url, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${jwt}`,
+                  },
+                  body: JSON.stringify({ accountId }),
+                });
+                const result = await res.json();
+                if (!result.success) {
+                  console.warn("❌ Backend wallet sync failed:", result.error);
+                } else {
+                  console.log("✅ Backend wallet synced:", result);
+                }
+              } else {
+                console.warn("⚠️ No JWT found, cannot sync wallet to backend");
+              }
+            } catch (err) {
+              console.error("❌ Error syncing wallet to backend:", err);
+            }
           }
         };
 

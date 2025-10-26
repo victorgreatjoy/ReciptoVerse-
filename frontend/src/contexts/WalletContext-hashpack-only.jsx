@@ -215,6 +215,34 @@ export const WalletProvider = ({ children }) => {
         // Save connection
         localStorage.setItem("wallet_accountId", selectedAccount);
 
+        // Sync with backend for NFT minting
+        try {
+          const jwt = localStorage.getItem("receiptoverse_token");
+          if (jwt) {
+            const API_BASE =
+              import.meta.env.VITE_API_URL || "http://localhost:3000";
+            const url = `${API_BASE}/api/users/connect-wallet`;
+            const res = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${jwt}`,
+              },
+              body: JSON.stringify({ accountId: selectedAccount }),
+            });
+            const result = await res.json();
+            if (!result.success) {
+              console.warn("Backend wallet connect failed:", result.error);
+            } else {
+              console.log("✅ Backend wallet connect success:", result);
+            }
+          } else {
+            console.warn("No JWT found, cannot sync wallet to backend");
+          }
+        } catch (err) {
+          console.error("❌ Error syncing wallet to backend:", err);
+        }
+
         setIsConnecting(false);
         return true;
       } else {

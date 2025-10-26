@@ -13,6 +13,8 @@ import EmailVerification from "./EmailVerification";
 import NotificationCenter from "./NotificationCenter";
 import AdminDashboard from "./AdminDashboard";
 import HashConnectButton from "./HashConnectButton";
+import NFTMarketplace from "./NFTMarketplace";
+import MyNFTCollection from "./MyNFTCollection";
 import { LoadingSpinner, Button, Badge } from "./ui";
 import AIChatButton from "./features/ai-support/AIChatButton";
 import AISupportChat from "./features/ai-support/AISupportChat";
@@ -330,6 +332,26 @@ const AppContent = () => {
                     </button>
                     <button
                       className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
+                        currentView === "nft-marketplace"
+                          ? "border-primary-500 text-primary-600"
+                          : "border-transparent text-earth-500 hover:text-earth-700 hover:border-earth-300"
+                      }`}
+                      onClick={() => setCurrentView("nft-marketplace")}
+                    >
+                      🛒 NFT Marketplace
+                    </button>
+                    <button
+                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
+                        currentView === "my-nfts"
+                          ? "border-primary-500 text-primary-600"
+                          : "border-transparent text-earth-500 hover:text-earth-700 hover:border-earth-300"
+                      }`}
+                      onClick={() => setCurrentView("my-nfts")}
+                    >
+                      💎 My NFTs
+                    </button>
+                    <button
+                      className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
                         currentView === "merchant"
                           ? "border-primary-500 text-primary-600"
                           : "border-transparent text-earth-500 hover:text-earth-700 hover:border-earth-300"
@@ -375,6 +397,8 @@ const AppContent = () => {
                     lastMintedNFT={lastMintedNFT}
                   />
                 )}
+                {currentView === "nft-marketplace" && <NFTMarketplace />}
+                {currentView === "my-nfts" && <MyNFTCollection />}
                 {currentView === "merchant" && <MerchantRegistration />}
                 {currentView === "merchant-dashboard" && <MerchantDashboard />}
                 {currentView === "pos" && <MerchantPOS />}
