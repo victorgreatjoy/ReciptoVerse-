@@ -876,7 +876,8 @@ async function seedInitialNFTTypes() {
         tier: 1,
         point_cost: 500,
         rarity: "common",
-        image_url: "https://ipfs.io/ipfs/QmVLArcnX2ADR7KqAdkhzSfxuahRixJCU6LSghXPM4i72z",
+        image_url:
+          "https://ipfs.io/ipfs/QmVLArcnX2ADR7KqAdkhzSfxuahRixJCU6LSghXPM4i72z",
         image_ipfs_hash: "QmVLArcnX2ADR7KqAdkhzSfxuahRixJCU6LSghXPM4i72z",
         benefits: JSON.stringify([
           "5% discount on purchases",
@@ -901,7 +902,8 @@ async function seedInitialNFTTypes() {
         tier: 2,
         point_cost: 1500,
         rarity: "rare",
-        image_url: "https://ipfs.io/ipfs/QmcLmQZzGjrA8jWjMNiMyLzCfTmedR5ujA15cLLLqacd9k",
+        image_url:
+          "https://ipfs.io/ipfs/QmcLmQZzGjrA8jWjMNiMyLzCfTmedR5ujA15cLLLqacd9k",
         image_ipfs_hash: "QmcLmQZzGjrA8jWjMNiMyLzCfTmedR5ujA15cLLLqacd9k",
         benefits: JSON.stringify([
           "10% discount on purchases",
@@ -929,7 +931,8 @@ async function seedInitialNFTTypes() {
         tier: 3,
         point_cost: 3000,
         rarity: "epic",
-        image_url: "https://ipfs.io/ipfs/QmSEjCZ5FcuXUvvPmeAcfVhYH2rYEzPLmX8i5hGmwZo7YP",
+        image_url:
+          "https://ipfs.io/ipfs/QmSEjCZ5FcuXUvvPmeAcfVhYH2rYEzPLmX8i5hGmwZo7YP",
         image_ipfs_hash: "QmSEjCZ5FcuXUvvPmeAcfVhYH2rYEzPLmX8i5hGmwZo7YP",
         benefits: JSON.stringify([
           "20% discount on all purchases",
