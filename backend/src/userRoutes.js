@@ -838,7 +838,9 @@ router.get("/wallet-status", authenticateToken, async (req, res) => {
 // DEBUG ENDPOINT: Check current NFT data
 router.get("/admin/check-nft-data", async (req, res) => {
   try {
-    const result = await query("SELECT id, name, animal_type, image_url, image_ipfs_hash FROM nft_types ORDER BY points_cost");
+    const result = await query(
+      "SELECT id, name, animal_type, image_url, image_ipfs_hash FROM nft_types ORDER BY points_cost"
+    );
     res.json({
       success: true,
       nfts: result.rows,
@@ -855,8 +857,13 @@ router.post("/admin/update-nft-images", async (req, res) => {
     console.log("🔧 Updating NFT images to IPFS URLs...");
 
     // First check current data
-    const beforeResult = await query("SELECT id, name, animal_type, image_url, image_ipfs_hash FROM nft_types ORDER BY points_cost");
-    console.log("📊 BEFORE UPDATE:", JSON.stringify(beforeResult.rows, null, 2));
+    const beforeResult = await query(
+      "SELECT id, name, animal_type, image_url, image_ipfs_hash FROM nft_types ORDER BY points_cost"
+    );
+    console.log(
+      "📊 BEFORE UPDATE:",
+      JSON.stringify(beforeResult.rows, null, 2)
+    );
 
     // Update Bronze Rabbit
     const rabbit = await query(
