@@ -375,6 +375,7 @@ async function getUserNFTCollection(userId) {
 
     return result.rows.map((nft) => ({
       ...nft,
+      hedera_token_id: nft.nft_token_id, // Add alias for frontend compatibility
       benefits:
         typeof nft.benefits === "string"
           ? JSON.parse(nft.benefits)
