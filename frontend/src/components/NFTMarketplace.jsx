@@ -237,15 +237,18 @@ const NFTMarketplace = () => {
           return (
             <div key={nft.id} className="nft-card">
               <div className="nft-image-container">
-                <img 
-                  src={nft.image_url || `https://ipfs.io/ipfs/${nft.image_ipfs_hash}`} 
-                  alt={nft.name} 
+                <img
+                  src={
+                    nft.image_url ||
+                    `https://ipfs.io/ipfs/${nft.image_ipfs_hash}`
+                  }
+                  alt={nft.name}
                   className="nft-image"
                   onError={(e) => {
                     // Fallback to alternative IPFS gateways if primary fails
-                    if (e.target.src.includes('gateway.pinata.cloud')) {
+                    if (e.target.src.includes("gateway.pinata.cloud")) {
                       e.target.src = `https://ipfs.io/ipfs/${nft.image_ipfs_hash}`;
-                    } else if (e.target.src.includes('ipfs.io')) {
+                    } else if (e.target.src.includes("ipfs.io")) {
                       e.target.src = `https://cloudflare-ipfs.com/ipfs/${nft.image_ipfs_hash}`;
                     }
                   }}

@@ -835,60 +835,85 @@ router.get("/wallet-status", authenticateToken, async (req, res) => {
   }
 });
 
+// DEBUG ENDPOINT: Check current NFT data
+router.get("/admin/check-nft-data", async (req, res) => {
+  try {
+    const result = await query("SELECT id, name, animal_type, image_url, image_ipfs_hash FROM nft_types ORDER BY points_cost");
+    res.json({
+      success: true,
+      nfts: result.rows,
+    });
+  } catch (error) {
+    console.error("Check NFT data error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ADMIN ENDPOINT: Update NFT images to IPFS URLs
 router.post("/admin/update-nft-images", async (req, res) => {
   try {
     console.log("🔧 Updating NFT images to IPFS URLs...");
 
+    // First check current data
+    const beforeResult = await query("SELECT id, name, animal_type, image_url, image_ipfs_hash FROM nft_types ORDER BY points_cost");
+    console.log("📊 BEFORE UPDATE:", JSON.stringify(beforeResult.rows, null, 2));
+
     // Update Bronze Rabbit
-    await query(
+    const rabbit = await query(
       `UPDATE nft_types 
        SET image_ipfs_hash = $1, 
            image_url = $2 
-       WHERE animal_type = $3`,
+       WHERE animal_type = $3
+       RETURNING id, name, image_url, image_ipfs_hash`,
       [
         "QmVLArcnX2ADR7KqAdkhzSfxuahRixJCU6LSghXPM4i72z",
         "https://gateway.pinata.cloud/ipfs/QmVLArcnX2ADR7KqAdkhzSfxuahRixJCU6LSghXPM4i72z",
         "rabbit",
       ]
     );
+    console.log("✅ Updated Rabbit:", rabbit.rows[0]);
 
     // Update Silver Fox
-    await query(
+    const fox = await query(
       `UPDATE nft_types 
        SET image_ipfs_hash = $1, 
            image_url = $2 
-       WHERE animal_type = $3`,
+       WHERE animal_type = $3
+       RETURNING id, name, image_url, image_ipfs_hash`,
       [
         "QmcLmQZzGjrA8jWjMNiMyLzCfTmedR5ujA15cLLLqacd9k",
         "https://gateway.pinata.cloud/ipfs/QmcLmQZzGjrA8jWjMNiMyLzCfTmedR5ujA15cLLLqacd9k",
         "fox",
       ]
     );
+    console.log("✅ Updated Fox:", fox.rows[0]);
 
     // Update Gold Eagle
-    await query(
+    const eagle = await query(
       `UPDATE nft_types 
        SET image_ipfs_hash = $1, 
            image_url = $2 
-       WHERE animal_type = $3`,
+       WHERE animal_type = $3
+       RETURNING id, name, image_url, image_ipfs_hash`,
       [
         "QmSEjCZ5FcuXUvvPmeAcfVhYH2rYEzPLmX8i5hGmwZo7YP",
         "https://gateway.pinata.cloud/ipfs/QmSEjCZ5FcuXUvvPmeAcfVhYH2rYEzPLmX8i5hGmwZo7YP",
         "eagle",
       ]
     );
+    console.log("✅ Updated Eagle:", eagle.rows[0]);
 
     // Get updated NFTs to confirm
-    const result = await query(
-      "SELECT animal_type, image_url, image_ipfs_hash FROM nft_types ORDER BY tier"
+    const afterResult = await query(
+      "SELECT id, name, animal_type, image_url, image_ipfs_hash FROM nft_types ORDER BY points_cost"
     );
+    console.log("📊 AFTER UPDATE:", JSON.stringify(afterResult.rows, null, 2));
 
     console.log("✅ NFT images updated successfully!");
     res.json({
       success: true,
       message: "NFT images updated to IPFS URLs",
-      nfts: result.rows,
+      nfts: afterResult.rows,
     });
   } catch (error) {
     console.error("❌ Error updating NFT images:", error);

@@ -199,7 +199,22 @@ const MyNFTCollection = () => {
           {collection.map((nft) => (
             <div key={nft.id} className="collection-nft-card">
               <div className="nft-image-container">
-                <img src={nft.image_url} alt={nft.name} className="nft-image" />
+                <img
+                  src={
+                    nft.image_url ||
+                    `https://ipfs.io/ipfs/${nft.image_ipfs_hash}`
+                  }
+                  alt={nft.name}
+                  className="nft-image"
+                  onError={(e) => {
+                    // Fallback to alternative IPFS gateways if primary fails
+                    if (e.target.src.includes("gateway.pinata.cloud")) {
+                      e.target.src = `https://ipfs.io/ipfs/${nft.image_ipfs_hash}`;
+                    } else if (e.target.src.includes("ipfs.io")) {
+                      e.target.src = `https://cloudflare-ipfs.com/ipfs/${nft.image_ipfs_hash}`;
+                    }
+                  }}
+                />
                 <div
                   className="nft-rarity-badge"
                   style={{ backgroundColor: getRarityBadge(nft.rarity) }}
@@ -230,6 +245,22 @@ const MyNFTCollection = () => {
                       {new Date(nft.minted_at).toLocaleDateString()}
                     </span>
                   </div>
+                  {nft.hedera_token_id && (
+                    <div className="meta-item meta-token-id">
+                      <span className="meta-icon">🔗</span>
+                      <span className="meta-label">Token ID</span>
+                      <span
+                        className="meta-value token-id"
+                        title="Click to copy"
+                        onClick={() => {
+                          navigator.clipboard.writeText(nft.hedera_token_id);
+                          alert("Token ID copied to clipboard!");
+                        }}
+                      >
+                        {nft.hedera_token_id}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="nft-benefits-list">
