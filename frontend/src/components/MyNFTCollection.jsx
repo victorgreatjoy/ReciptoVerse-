@@ -36,7 +36,18 @@ const MyNFTCollection = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setCollection(response.data.collection || []);
+      // FORCE IPFS URLs - override database values
+      const nfts = (response.data.collection || []).map((nft) => {
+        const ipfsHash =
+          nft.image_ipfs_hash || getIPFSHashForAnimal(nft.animal_type);
+        return {
+          ...nft,
+          image_url: `https://ipfs.io/ipfs/${ipfsHash}`,
+          image_ipfs_hash: ipfsHash,
+        };
+      });
+
+      setCollection(nfts);
       setError(null);
     } catch (err) {
       console.error("Error loading collection:", err);
@@ -44,6 +55,16 @@ const MyNFTCollection = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fallback IPFS hashes
+  const getIPFSHashForAnimal = (animalType) => {
+    const hashes = {
+      rabbit: "QmVLArcnX2ADR7KqAdkhzSfxuahRixJCU6LSghXPM4i72z",
+      fox: "QmcLmQZzGjrA8jWjMNiMyLzCfTmedR5ujA15cLLLqacd9k",
+      eagle: "QmSEjCZ5FcuXUvvPmeAcfVhYH2rYEzPLmX8i5hGmwZo7YP",
+    };
+    return hashes[animalType] || "";
   };
 
   const loadBenefits = async () => {

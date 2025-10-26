@@ -33,7 +33,20 @@ const NFTMarketplace = () => {
       console.log("🔍 Fetching NFT types from:", url);
       const response = await axios.get(url);
       console.log("✅ NFT types loaded:", response.data);
-      setNftTypes(response.data.nft_types || []);
+
+      // FORCE IPFS URLs - override database values
+      const nfts = (response.data.nft_types || []).map((nft) => {
+        const ipfsHash =
+          nft.image_ipfs_hash || getIPFSHashForAnimal(nft.animal_type);
+        return {
+          ...nft,
+          image_url: `https://ipfs.io/ipfs/${ipfsHash}`,
+          image_ipfs_hash: ipfsHash,
+        };
+      });
+
+      console.log("🖼️ NFTs with IPFS URLs:", nfts);
+      setNftTypes(nfts);
       setError(null);
     } catch (err) {
       console.error("Error loading NFT types:", err);
@@ -41,6 +54,16 @@ const NFTMarketplace = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fallback IPFS hashes
+  const getIPFSHashForAnimal = (animalType) => {
+    const hashes = {
+      rabbit: "QmVLArcnX2ADR7KqAdkhzSfxuahRixJCU6LSghXPM4i72z",
+      fox: "QmcLmQZzGjrA8jWjMNiMyLzCfTmedR5ujA15cLLLqacd9k",
+      eagle: "QmSEjCZ5FcuXUvvPmeAcfVhYH2rYEzPLmX8i5hGmwZo7YP",
+    };
+    return hashes[animalType] || "";
   };
 
   const loadUserPoints = async () => {
