@@ -876,7 +876,8 @@ async function seedInitialNFTTypes() {
         tier: 1,
         point_cost: 500,
         rarity: "common",
-        image_url: "https://i.imgur.com/rabbit-bronze.png",
+        image_url: "https://ipfs.io/ipfs/QmVLArcnX2ADR7KqAdkhzSfxuahRixJCU6LSghXPM4i72z",
+        image_ipfs_hash: "QmVLArcnX2ADR7KqAdkhzSfxuahRixJCU6LSghXPM4i72z",
         benefits: JSON.stringify([
           "5% discount on purchases",
           "50 bonus points on first use",
@@ -900,7 +901,8 @@ async function seedInitialNFTTypes() {
         tier: 2,
         point_cost: 1500,
         rarity: "rare",
-        image_url: "https://i.imgur.com/fox-silver.png",
+        image_url: "https://ipfs.io/ipfs/QmcLmQZzGjrA8jWjMNiMyLzCfTmedR5ujA15cLLLqacd9k",
+        image_ipfs_hash: "QmcLmQZzGjrA8jWjMNiMyLzCfTmedR5ujA15cLLLqacd9k",
         benefits: JSON.stringify([
           "10% discount on purchases",
           "150 bonus points monthly",
@@ -927,7 +929,8 @@ async function seedInitialNFTTypes() {
         tier: 3,
         point_cost: 3000,
         rarity: "epic",
-        image_url: "https://i.imgur.com/eagle-gold.png",
+        image_url: "https://ipfs.io/ipfs/QmSEjCZ5FcuXUvvPmeAcfVhYH2rYEzPLmX8i5hGmwZo7YP",
+        image_ipfs_hash: "QmSEjCZ5FcuXUvvPmeAcfVhYH2rYEzPLmX8i5hGmwZo7YP",
         benefits: JSON.stringify([
           "20% discount on all purchases",
           "500 bonus points monthly",
@@ -957,16 +960,16 @@ async function seedInitialNFTTypes() {
         ? `
           INSERT INTO nft_types (
             name, description, animal_type, tier, point_cost, rarity,
-            image_url, benefits, discount_percentage, monthly_bonus_points,
+            image_url, image_ipfs_hash, benefits, discount_percentage, monthly_bonus_points,
             max_supply, metadata_template, is_active
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         `
         : `
           INSERT INTO nft_types (
             name, description, animal_type, tier, point_cost, rarity,
-            image_url, benefits, discount_percentage, monthly_bonus_points,
+            image_url, image_ipfs_hash, benefits, discount_percentage, monthly_bonus_points,
             max_supply, metadata_template, is_active
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       const params = [
@@ -977,6 +980,7 @@ async function seedInitialNFTTypes() {
         nftType.point_cost,
         nftType.rarity,
         nftType.image_url,
+        nftType.image_ipfs_hash,
         nftType.benefits,
         nftType.discount_percentage,
         nftType.monthly_bonus_points,
