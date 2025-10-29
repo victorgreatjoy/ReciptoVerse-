@@ -787,6 +787,44 @@ router.post("/connect-wallet", authenticateToken, async (req, res) => {
   }
 });
 
+// Associate RVP token with user's Hedera account
+router.post("/associate-rvp", authenticateToken, async (req, res) => {
+  try {
+    const { accountId, tokenId } = req.body;
+    const userId = req.user.id;
+
+    if (!accountId || !tokenId) {
+      return res.status(400).json({
+        error: "Account ID and Token ID are required",
+      });
+    }
+
+    // Update user's HTS association status
+    await query(
+      `UPDATE users 
+       SET hts_account_id = ?, 
+           hts_token_associated = 1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [accountId, userId]
+    );
+
+    console.log(
+      `✅ RVP token associated: ${tokenId} for account ${accountId} (user ${userId})`
+    );
+
+    res.json({
+      success: true,
+      message: "RVP token associated successfully",
+      accountId,
+      tokenId,
+    });
+  } catch (error) {
+    console.error("❌ RVP association error:", error);
+    res.status(500).json({ error: "Failed to associate RVP token" });
+  }
+});
+
 // Disconnect Hedera wallet
 router.post("/disconnect-wallet", authenticateToken, async (req, res) => {
   try {

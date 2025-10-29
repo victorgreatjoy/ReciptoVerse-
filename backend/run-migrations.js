@@ -4,6 +4,8 @@
  */
 
 const { query, pool, initializeDatabase } = require("./src/database");
+const fs = require("fs");
+const path = require("path");
 
 async function runMigrations() {
   try {
@@ -111,6 +113,152 @@ async function runMigrations() {
       console.log("ℹ️ Index creation info:", error.message);
     }
 
+    // Phase 1 HCS schema migration (SQL file / SQLite fallback)
+    console.log(
+      "\n4️⃣ Applying HCS (Hedera Consensus Service) schema updates..."
+    );
+    try {
+      if (pool) {
+        const hcsSqlPath = path.join(
+          __dirname,
+          "migrations",
+          "001_add_hcs_fields.sql"
+        );
+        if (fs.existsSync(hcsSqlPath)) {
+          const sql = fs.readFileSync(hcsSqlPath, "utf8");
+          await query(sql);
+          console.log("✅ HCS schema updates applied");
+        } else {
+          console.log("⚠️ HCS migration file not found at", hcsSqlPath);
+        }
+      } else {
+        // SQLite: add missing columns to receipts table
+        console.log(
+          "🗂️ SQLite detected - applying HCS schema updates for SQLite..."
+        );
+
+        // Check existing columns
+        const tableInfo = await query("PRAGMA table_info(receipts)");
+        const hasCol = (name) => tableInfo.rows.some((c) => c.name === name);
+
+        const addCol = async (name, type) => {
+          if (!hasCol(name)) {
+            await query(`ALTER TABLE receipts ADD COLUMN ${name} ${type}`);
+            console.log(`✅ Added column receipts.${name}`);
+          } else {
+            console.log(`ℹ️ Column receipts.${name} already exists`);
+          }
+        };
+
+        await addCol("hcs_topic_id", "TEXT");
+        await addCol("hcs_sequence", "INTEGER");
+        await addCol("hcs_timestamp", "TEXT");
+        await addCol("receipt_hash", "TEXT");
+        await addCol("hcs_transaction_id", "TEXT");
+        await addCol("hcs_anchored_at", "DATETIME");
+
+        // Create indexes
+        await query(
+          "CREATE INDEX IF NOT EXISTS idx_receipts_hcs ON receipts(hcs_topic_id, hcs_sequence)"
+        );
+        await query(
+          "CREATE INDEX IF NOT EXISTS idx_receipts_hash ON receipts(receipt_hash)"
+        );
+        await query(
+          "CREATE INDEX IF NOT EXISTS idx_receipts_anchored ON receipts(hcs_anchored_at)"
+        );
+        console.log("✅ Created HCS-related indexes on receipts");
+
+        // Create HCS events table (SQLite)
+        await query(
+          `CREATE TABLE IF NOT EXISTS hcs_events (
+            id TEXT PRIMARY KEY,
+            topic_id TEXT NOT NULL,
+            sequence_number INTEGER NOT NULL,
+            consensus_timestamp TEXT NOT NULL,
+            message_type TEXT,
+            message_data TEXT,
+            processed INTEGER DEFAULT 0,
+            processed_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(topic_id, sequence_number)
+          )`
+        );
+        await query(
+          "CREATE INDEX IF NOT EXISTS idx_hcs_events_topic ON hcs_events(topic_id, sequence_number)"
+        );
+        await query(
+          "CREATE INDEX IF NOT EXISTS idx_hcs_events_processed ON hcs_events(processed, created_at)"
+        );
+        await query(
+          "CREATE INDEX IF NOT EXISTS idx_hcs_events_type ON hcs_events(message_type)"
+        );
+        console.log("✅ Created/verified hcs_events table and indexes");
+
+        // Create HCS topics table (SQLite)
+        await query(
+          `CREATE TABLE IF NOT EXISTS hcs_topics (
+            id TEXT PRIMARY KEY,
+            topic_id TEXT UNIQUE NOT NULL,
+            topic_memo TEXT,
+            purpose TEXT,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_active INTEGER DEFAULT 1
+          )`
+        );
+        await query(
+          "CREATE INDEX IF NOT EXISTS idx_hcs_topics_purpose ON hcs_topics(purpose)"
+        );
+        console.log("✅ Created/verified hcs_topics table and index");
+      }
+    } catch (error) {
+      console.error("❌ Error applying HCS migration:", error.message);
+    }
+
+    // 6️⃣ Migration 006: Add HTS Support
+    console.log("\n6️⃣ Adding HTS support...");
+    try {
+      if (pool) {
+        // PostgreSQL - run the HTS migration
+        const htsMigrationSQL = fs.readFileSync(
+          path.join(__dirname, "migrations", "006_add_hts_support_pg.sql"),
+          "utf8"
+        );
+        await query(htsMigrationSQL);
+        console.log("✅ Applied HTS migration for PostgreSQL");
+      } else {
+        // SQLite - run the HTS migration
+        const htsMigrationSQL = fs.readFileSync(
+          path.join(__dirname, "migrations", "006_add_hts_support.sql"),
+          "utf8"
+        );
+
+        // Split by semicolons and execute each statement
+        const statements = htsMigrationSQL
+          .split(";")
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
+
+        for (const statement of statements) {
+          try {
+            await query(statement);
+          } catch (err) {
+            // Ignore duplicate column errors
+            if (
+              !err.message.includes("duplicate") &&
+              !err.message.includes("already exists")
+            ) {
+              console.log("⚠️ HTS migration statement warning:", err.message);
+            }
+          }
+        }
+        console.log("✅ Applied HTS migration for SQLite");
+      }
+    } catch (error) {
+      console.error("❌ Error applying HTS migration:", error.message);
+    }
+
     // Verify the schema
     console.log("\n✅ Migrations complete! Verifying schema...");
 
@@ -125,6 +273,12 @@ async function runMigrations() {
       console.log("\n📋 Receipts table columns:");
       receiptColumns.rows.forEach((col) => {
         console.log(`  ✓ ${col.column_name}`);
+      });
+    } else {
+      const receiptColumns = await query("PRAGMA table_info(receipts)");
+      console.log("\n📋 Receipts table columns (SQLite):");
+      receiptColumns.rows.forEach((col) => {
+        console.log(`  ✓ ${col.name} (${col.type})`);
       });
     }
 

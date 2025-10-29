@@ -1,8 +1,10 @@
 const { query } = require("./database");
+const htsPointsService = require("./services/blockchain/htsPointsService");
 
 /**
  * Points Service - Handles all points-related operations
  * Implements loyalty tier system and point calculations
+ * Phase 2: Integrated with Hedera Token Service (HTS)
  */
 
 // Loyalty tier configuration
@@ -86,9 +88,9 @@ async function awardPoints(
   description = null
 ) {
   try {
-    // Get user's current tier
+    // Get user's current tier and HTS info
     const userResult = await query(
-      "SELECT loyalty_tier, total_points_earned FROM users WHERE id = ?",
+      "SELECT loyalty_tier, total_points_earned, hts_account_id, hts_token_associated FROM users WHERE id = ?",
       [userId]
     );
 
@@ -168,6 +170,67 @@ async function awardPoints(
     // Check if tier changed
     const tierChanged = newTier !== currentTier;
 
+    // HTS Integration (Phase 2): Mint on-chain tokens if enabled
+    let htsResult = null;
+    try {
+      console.log("🔍 HTS Check:", {
+        hasTokenId: !!process.env.HTS_POINTS_TOKEN_ID,
+        tokenId: process.env.HTS_POINTS_TOKEN_ID,
+        hasUserAccount: !!user.hts_account_id,
+        userAccount: user.hts_account_id,
+        isAssociated: user.hts_token_associated,
+      });
+
+      if (process.env.HTS_POINTS_TOKEN_ID && user.hts_account_id) {
+        console.log(
+          `🔷 Attempting to mint ${pointsToAward} HTS tokens to ${user.hts_account_id}...`
+        );
+
+        // Attempt to mint tokens on Hedera
+        await htsPointsService.initialize();
+        htsResult = await htsPointsService.mintPoints(
+          user.hts_account_id,
+          pointsToAward,
+          `Purchase: $${purchaseAmount.toFixed(2)}`
+        );
+
+        // Update transaction with HTS details
+        if (htsResult && htsResult.success) {
+          await query(
+            `UPDATE points_transactions 
+             SET hts_tx_id = ?, hts_synced = 1 
+             WHERE id = ?`,
+            [
+              htsResult.transferTxId,
+              transactionResult.lastID || transactionResult.rows[0]?.id,
+            ]
+          );
+
+          // Update user's HTS balance
+          await query(
+            `UPDATE users 
+             SET hts_balance = hts_balance + ?, hts_last_sync = CURRENT_TIMESTAMP
+             WHERE id = ?`,
+            [pointsToAward, userId]
+          );
+
+          console.log(
+            `🪙 Minted ${pointsToAward} HTS tokens to ${user.hts_account_id}`
+          );
+        } else if (htsResult && htsResult.notAssociated) {
+          console.log(
+            `⚠️ User ${user.hts_account_id} is not associated with RVP token. Points awarded in database only.`
+          );
+        }
+      }
+    } catch (htsError) {
+      // Log HTS error but don't fail the entire transaction
+      console.warn(
+        "⚠️ HTS minting failed (points still awarded in database):",
+        htsError.message
+      );
+    }
+
     return {
       success: true,
       pointsAwarded: pointsToAward,
@@ -177,6 +240,8 @@ async function awardPoints(
       newTier,
       tierChanged,
       transactionId: transactionResult.lastID || transactionResult.rows[0]?.id,
+      htsEnabled: !!htsResult,
+      htsTxId: htsResult?.transferTxId,
     };
   } catch (error) {
     console.error("❌ Error awarding points:", error);

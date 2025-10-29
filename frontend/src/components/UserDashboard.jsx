@@ -4,6 +4,7 @@ import { useWebSocket } from "../contexts/WebSocketContext";
 import { LoadingSpinner } from "./ui";
 import PointsDashboard from "./PointsDashboard";
 import EnhancedUserQRCode from "./EnhancedUserQRCode";
+import RVPTokenCard from "./RVPTokenCard";
 import "./UserDashboard.css";
 
 const UserDashboard = () => {
@@ -189,6 +190,9 @@ const UserDashboard = () => {
                 )}
               </div>
             </div>
+
+            {/* RVP Token Card - Hedera HTS Integration */}
+            <RVPTokenCard />
 
             <div className="stat-card success">
               <div className="stat-icon">💰</div>

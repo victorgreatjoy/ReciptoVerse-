@@ -5,8 +5,12 @@ const crypto = require("crypto");
 const { query, pool } = require("./database");
 const { authenticateToken } = require("./auth");
 const notificationService = require("./notificationService");
-const { NFTService } = require("./nftService");
-const { shouldMintNft, getNftSettings } = require("./adminRoutes");
+// Removed NFT threshold-based minting from POS flow
+// const { NFTService } = require("./nftService");
+// const { shouldMintNft, getNftSettings } = require("./adminRoutes");
+const {
+  getHCSReceiptService,
+} = require("./services/blockchain/hcsReceiptService");
 const { awardPoints, validatePointsTransaction } = require("./pointsService");
 
 const router = express.Router();
@@ -624,13 +628,13 @@ router.post("/pos/create-receipt", authenticateMerchant, async (req, res) => {
     if (pool) {
       receiptData = receiptResult.rows[0];
     } else {
-      // SQLite - get the inserted receipt
+      // SQLite - fetch by rowid to get the actual TEXT primary key id
       const insertedReceipt = await query(
-        "SELECT id, created_at FROM receipts WHERE id = ?",
+        "SELECT id, created_at FROM receipts WHERE rowid = ?",
         [receiptResult.lastID]
       );
       receiptData = {
-        id: receiptResult.lastID,
+        id: insertedReceipt.rows[0]?.id,
         created_at: insertedReceipt.rows[0]?.created_at,
       };
     }
@@ -713,75 +717,30 @@ router.post("/pos/create-receipt", authenticateMerchant, async (req, res) => {
       itemCount: items.length,
     });
 
-    // NFT Minting with Threshold Check (Phase 2.2)
-    let nftData = null;
-    const nftSettings = getNftSettings();
-
-    console.log(
-      `🎯 NFT Threshold Check: $${totalAmount} vs $${nftSettings.threshold}`
-    );
-    console.log(`🎨 NFT Settings:`, nftSettings);
-
-    if (shouldMintNft(totalAmount)) {
-      try {
-        console.log(
-          "🎨 Receipt meets threshold! Minting NFT for customer:",
-          customer.handle
+    // Auto-anchor to Hedera HCS (non-blocking)
+    try {
+      const hcsService = getHCSReceiptService();
+      hcsService
+        .anchorReceipt({
+          id: receiptData.id,
+          user_id: customerId,
+          merchant_id: req.merchant.id,
+          amount: totalAmount,
+          currency: "USD",
+          receipt_date: new Date().toISOString().split("T")[0],
+          items: items,
+        })
+        .then(() =>
+          console.log(`🔗 Receipt ${receiptData.id} anchored to HCS (auto)`)
+        )
+        .catch((err) =>
+          console.warn(
+            `⚠️ Auto-anchoring failed for receipt ${receiptData.id}:`,
+            err.message
+          )
         );
-
-        const nftService = new NFTService();
-        const nftResult = await nftService.mintReceiptNFT(
-          {
-            id: receiptData.id,
-            total_amount: totalAmount,
-            created_at: receiptData.created_at,
-            customer_id: customerId,
-            items: items,
-          },
-          req.merchant,
-          customer.hedera_account_id // Will be null for now, NFT stays in treasury
-        );
-
-        if (nftResult.success) {
-          console.log("✅ Receipt NFT minted successfully:", nftResult.tokenId);
-
-          // Update receipt with NFT information
-          await query(
-            "UPDATE receipts SET nft_token_id = ?, nft_serial_number = ? WHERE id = ?",
-            [nftResult.tokenId, nftResult.serialNumber, receiptData.id]
-          );
-
-          nftData = {
-            tokenId: nftResult.tokenId,
-            serialNumber: nftResult.serialNumber,
-            collectionId: nftResult.collectionId,
-            hashscanUrl: nftResult.hashscanUrl,
-            metadata: nftResult.metadata,
-          };
-
-          // Send enhanced NFT notification to customer
-          await notificationService.sendReceiptNotification(customerId, {
-            ...receiptNotificationData,
-            nft: nftData,
-            type: "receipt_with_nft",
-            message: `🎨 Congratulations! Your $${totalAmount} receipt has been minted as an NFT collectible!`,
-          });
-
-          console.log("✅ Receipt NFT created and customer notified");
-        } else {
-          console.warn("⚠️ NFT minting failed:", nftResult.error);
-          // Continue without NFT - receipt still created successfully
-        }
-
-        nftService.close();
-      } catch (nftError) {
-        console.error("❌ NFT minting error:", nftError.message);
-        // Continue without NFT - receipt still created successfully
-      }
-    } else {
-      console.log(
-        `📝 Receipt below threshold ($${totalAmount} < $${nftSettings.threshold}) - no NFT minted`
-      );
+    } catch (e) {
+      console.warn("⚠️ Auto-anchoring setup error:", e.message);
     }
 
     res.status(201).json({
@@ -796,7 +755,7 @@ router.post("/pos/create-receipt", authenticateMerchant, async (req, res) => {
         paymentMethod: paymentMethod,
         createdAt: receiptData.created_at,
         isVerified: true,
-        nft: nftData,
+        nft: null,
       },
       points: pointsAwarded
         ? {
@@ -806,14 +765,9 @@ router.post("/pos/create-receipt", authenticateMerchant, async (req, res) => {
             tierChanged: pointsAwarded.tierChanged,
           }
         : null,
-      message:
-        nftData && pointsAwarded
-          ? `Receipt created with NFT collectible! ${pointsAwarded.pointsAwarded} points awarded! 🎉`
-          : pointsAwarded
-          ? `Receipt created! ${pointsAwarded.pointsAwarded} points awarded! 💰`
-          : nftData
-          ? "Receipt created successfully with NFT collectible!"
-          : "Receipt created successfully and sent to customer",
+      message: pointsAwarded
+        ? `Receipt created! ${pointsAwarded.pointsAwarded} points awarded! 💰`
+        : "Receipt created successfully and sent to customer",
     });
   } catch (error) {
     console.error("Create receipt error:", error);
@@ -1002,7 +956,42 @@ router.post("/scan-qr", authenticateMerchant, async (req, res) => {
           JSON.stringify(receiptData.items || []),
         ]
       );
-      receiptId = receiptResult.lastID || receiptResult.rows[0]?.id;
+      // SQLite: fetch actual id using rowid; Postgres: rows[0]?.id
+      if (pool) {
+        receiptId = receiptResult.rows[0]?.id;
+      } else {
+        const row = await query("SELECT id FROM receipts WHERE rowid = ?", [
+          receiptResult.lastID,
+        ]);
+        receiptId = row.rows[0]?.id;
+      }
+
+      // Auto-anchor created receipt to Hedera HCS (non-blocking)
+      try {
+        const hcsService = getHCSReceiptService();
+        hcsService
+          .anchorReceipt({
+            id: receiptId,
+            user_id: userId,
+            merchant_id: merchant.id,
+            amount: purchaseAmount,
+            currency: "USD",
+            // Use current date since we used CURRENT_DATE in SQL insert
+            receipt_date: new Date().toISOString().split("T")[0],
+            items: receiptData.items || [],
+          })
+          .then(() =>
+            console.log(`🔗 Receipt ${receiptId} anchored to HCS (auto)`)
+          )
+          .catch((err) =>
+            console.warn(
+              `⚠️ Auto-anchoring failed for receipt ${receiptId}:`,
+              err.message
+            )
+          );
+      } catch (e) {
+        console.warn("⚠️ Auto-anchoring setup error:", e.message);
+      }
     }
 
     // Award points

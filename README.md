@@ -1,414 +1,207 @@
-# ReceiptoVerse MVP 🧾
+# ReceiptoVerse • Hedera HCS + HTS + NFTs 🧾⚡
 
-A blockchain-based receipt NFT platform built on Hedera Hashgraph that allows merchants to create receipt NFTs and reward customers with RECV tokens.
+End-to-end receipt verification and loyalty on Hedera: immutable receipt anchoring (HCS), on-chain points (HTS RVP), and collectible reward NFTs — with a React frontend and a Node/Express API.
 
-## 🎯 Overview
+## Overview
 
-ReceiptoVerse transforms traditional paper receipts into valuable NFTs while rewarding customers for their purchases. Built on Hedera's fast and eco-friendly blockchain, this platform demonstrates how everyday transactions can be enhanced with blockchain technology.
+ReceiptoVerse anchors each receipt to Hedera Consensus Service for public integrity proofs, mints fungible RVP points on Hedera Token Service for purchases, and offers mintable reward NFTs. It includes a merchant POS flow, a modern dashboard with wallet connect and RVP balance/association, and public verification endpoints.
 
-## ✨ Features
+Key IDs (testnet):
 
-- **Receipt NFT Creation**: Convert purchase receipts into unique NFTs stored on IPFS
-- **Token Rewards**: Customers receive RECV tokens for each purchase
-- **Blockchain Storage**: All data immutably stored on Hedera testnet
-- **IPFS Integration**: Metadata stored on distributed file system via Pinata
-- **Real-time Viewing**: Direct links to view NFTs on HashScan explorer
+- HCS Topic: `0.0.7153725`
+- RVP Token (HTS): `0.0.7154427` (decimals: 2)
+- Operator/Treasury: `0.0.6913837`
 
-## 🏗️ Architecture
+See also: `ARCHITECTURE_DIAGRAM.md`, `API_REFERENCE.md`, `HTS_PHASE2_COMPLETE.md`.
 
-### Backend (Node.js + Express)
+## Features
 
-- **Hedera SDK**: Blockchain interactions (token minting, transfers, associations)
-- **Pinata IPFS**: Decentralized metadata storage
-- **Express API**: RESTful endpoints for frontend communication
+- Receipt integrity on-chain (HCS): anchor, verify, and prove receipts without exposing PII
+- On-chain loyalty points (HTS): earn RVP on purchase; frontend shows balance and association
+- Public verification: anyone can verify a receipt’s hash and topic sequence
+- Merchant POS routes: scan QR, create receipts, auto-award points (and auto-anchor)
+- NFT rewards: marketplace endpoints, benefits, monthly bonuses
+- Robust DB migrations for HCS and HTS, SQLite (dev) and Postgres (prod)
 
-### Frontend (React + Vite)
+## Architecture
 
-- **React Interface**: Dynamic receipt form with real-time calculations
-- **Mock Wallet**: Simplified connection for MVP testing
-- **Responsive Design**: Custom CSS styling for modern UX
+Backend (Node.js/Express)
 
-### Blockchain Components
+- DLT Gateway: centralized Hedera client with HCS/HTS helpers (`dltGateway.js`)
+- HCS Receipt Service: anchor/verify/proof (`hcsReceiptService.js`), routes in `/api/receipts`
+- HTS Points Service: initialize/token ops/balance (`htsPointsService.js`), endpoints in `/api/token`
+- Receipts/Users/Merchants/Points/NFT routes wired in `src/server.js`
+- Database: `src/database.js` (SQLite dev, Postgres prod) + `run-migrations.js`
 
-- **RECV Token** (`0.0.6922722`): Fungible reward token
-- **rNFT Token** (`0.0.6922732`): Non-fungible receipt collection
-- **Hedera Testnet**: Fast, low-cost blockchain network
+Frontend (React + Vite)
 
-## 🚀 Quick Start
+- HashConnect wallet pairing
+- RVPTokenCard: associate RVP, view balance and HashScan link
+- User dashboard with receipts and NFT gallery
 
-### Prerequisites
+Hedera
 
-- Node.js v22.20.0 or higher
-- Hedera testnet account with HBAR
-- Pinata account for IPFS storage
+- HCS topic per receipts anchoring; Mirror Node lookups
+- HTS fungible token RVP for loyalty; decimals=2; mint/transfer via operator treasury
 
-### Environment Setup
+## Quick start
 
-Create `.env` file in the root directory:
+Prerequisites
 
-```env
-# Hedera Configuration
-OPERATOR_ID=0.0.YOUR_ACCOUNT_ID
-OPERATOR_KEY=your_private_key_here
+- Node 18+
+- Hedera testnet account with HBAR (for OPERATOR)
+- Optional Postgres for production (SQLite used locally)
+- Pinata or compatible IPFS pinning
 
-# Token IDs (created during setup)
-RECV_TOKEN_ID=0.0.6922722
-RNFT_TOKEN_ID=0.0.6922732
+Environment (.env)
+Create `backend/.env` using these keys (sample):
 
-# Pinata IPFS Configuration
-PINATA_API_KEY=your_pinata_api_key
-PINATA_SECRET_API_KEY=your_pinata_secret
-PINATA_JWT=your_pinata_jwt_token
+```properties
+NODE_ENV=development
+HEDERA_NETWORK=testnet
+OPERATOR_ID=0.0.xxxxxx
+OPERATOR_KEY=302e020100300506032b657004220420... # or 0x... format
+
+# HCS (set to reuse an existing topic; otherwise created on first run)
+HCS_RECEIPT_TOPIC_ID=0.0.7153725
+
+# HTS Points (set after token is created or use the provided testnet token)
+HTS_POINTS_TOKEN_ID=0.0.7154427
+
+# Auth and server
+JWT_SECRET=change_me
+PORT=3000
+FRONTEND_URL=http://localhost:5173
+
+# Database (empty = SQLite local)
+DATABASE_URL=
+
+# Email (optional) & reCAPTCHA (optional in dev)
+EMAIL_HOST=
+EMAIL_USER=
+EMAIL_PASS=
+EMAIL_FROM=
+RECAPTCHA_SECRET_KEY=
+
+# IPFS (Pinata)
+PINATA_API_KEY=
+PINATA_SECRET_API_KEY=
+PINATA_JWT=
 ```
 
-### Installation & Running
+Install and run (Windows PowerShell)
 
-1. **Clone and Install Dependencies**
+- Backend
+  1. `cd backend`
+  2. `npm install`
+  3. `npm run migrate`
+  4. `npm run dev` (or `npm start`)
+- Frontend
+  1. `cd frontend`
+  2. `npm install`
+  3. `npm run dev`
 
-   ```bash
-   # Install backend dependencies
-   cd backend
-   npm install
+Visit: http://localhost:5173
 
-   # Install frontend dependencies
-   cd ../frontend
-   npm install
-   ```
-
-2. **Start Backend Server**
-
-   ```bash
-   cd backend/src
-   node server.js
-   ```
+## Hedera integrations
 
-   You should see:
+HCS: Receipts anchoring and public verification
 
-   ```
-   🔧 Hedera client configured:
-   Operator ID: 0.0.6913837
-   RECV Token ID: 0.0.6922722
-   rNFT Token ID: 0.0.6922732
-   🔧 Pinata configured:
-   API Key: ✅ Loaded
-   ✅ API running on http://localhost:3000
-   ```
+- Anchor: POST `/api/receipts/:id/anchor` (auth)
+- Verify: GET `/api/receipts/:id/verify` (public)
+- Public verify: GET `/api/receipts/public/:id/verify`
+- Proof bundle: GET `/api/receipts/:id/proof`
+  What’s stored on-chain: deterministic receipt hash, minimal metadata, no PII.
 
-3. **Start Frontend** (new terminal)
+HTS: RVP points token
 
-   ```bash
-   cd frontend
-   npm run dev
-   ```
+- Token info: GET `/api/token/info`
+- Balance: GET `/api/token/balance/:accountId`
+- Association status: GET `/api/token/association-status/:accountId`
+- Award flow: merchant → POS receipt → `awardPoints()` → on-chain mint to associated accounts
+- Decimals handling: RVP has 2 decimals; 13 points → 1300 units on-chain → shows as 13.00 RVP
 
-   Open: http://localhost:5173/
+Frontend wallet + RVP UX
 
-## 📋 How to Use
+- Connect via HashConnect; backend records `hedera_account_id`
+- RVPTokenCard lets users associate the token (wallet-signed TokenAssociateTransaction)
+- After association, backend `awardPoints` mints on-chain and UI shows live balance + HashScan links
 
-### Creating a Receipt NFT
+NFT rewards
 
-1. **Connect Wallet**: Click "Connect Wallet (Mock)" button
-2. **Fill Receipt Details**:
-   - Merchant name (e.g., "Coffee Shop Downtown")
-   - Add items with names, prices, and quantities
-   - Total automatically calculated
-3. **Create NFT**: Click "Create Receipt NFT"
-4. **View Results**: Links to HashScan and IPFS metadata
-
-### Example Receipt Data
-
-```json
-{
-  "merchant": "Coffee Shop Downtown",
-  "items": [
-    { "name": "Latte", "price": 4.5, "quantity": 2 },
-    { "name": "Croissant", "price": 3.25, "quantity": 1 }
-  ],
-  "total": 12.25
-}
-```
-
-## 🔧 API Endpoints
-
-### POST `/associate-tokens`
-
-Associates RECV and rNFT tokens with a customer account.
-
-**Request:**
-
-```json
-{
-  "accountId": "0.0.123456"
-}
-```
-
-**Response:**
-
-```json
-{
-  "status": "success",
-  "message": "Tokens associated with account 0.0.123456",
-  "tokens": ["0.0.6922722", "0.0.6922732"]
-}
-```
-
-### POST `/mint-receipt`
-
-Creates a receipt NFT and rewards the customer.
-
-**Request:**
-
-```json
-{
-  "merchant": "Coffee Shop",
-  "items": [{ "name": "Coffee", "price": 3.5, "quantity": 1 }],
-  "total": 3.5,
-  "customerWallet": "0.0.123456"
-}
-```
-
-**Response:**
-
-```json
-{
-  "status": "success",
-  "receiptNFT": "0.0.6922732::5",
-  "metadataUrl": "https://gateway.pinata.cloud/ipfs/Qm...",
-  "reward": "10 RECV",
-  "nftViewUrl": "https://hashscan.io/testnet/token/0.0.6922732/5"
-}
-```
-
-## 🧪 Testing
-
-### Backend API Testing
-
-Run the automated test suite:
-
-```bash
-cd backend
-node test-api.js
-```
-
-This tests:
-
-- Token association
-- Receipt NFT minting
-- IPFS metadata upload
-- Blockchain transactions
-
-### Manual Testing with cURL
-
-```bash
-# Test token association
-curl -X POST http://localhost:3000/associate-tokens \
-  -H "Content-Type: application/json" \
-  -d '{"accountId": "0.0.6913837"}'
-
-# Test receipt creation
-curl -X POST http://localhost:3000/mint-receipt \
-  -H "Content-Type: application/json" \
-  -d '{
-    "merchant": "Test Shop",
-    "items": [{"name": "Item", "price": 10, "quantity": 1}],
-    "total": 10,
-    "customerWallet": "0.0.6913837"
-  }'
-```
-
-## 📊 Project Structure
-
-```
-ReceiptoVerse/
-├── backend/
-│   ├── src/
-│   │   ├── server.js              # Main Express server
-│   │   ├── create-receipt-nft.js  # NFT creation logic
-│   │   ├── create-recv-token.js   # RECV token setup
-│   │   └── hederaClient.js        # Hedera SDK configuration
-│   ├── test-api.js                # Automated API tests
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx                # Main React component
-│   │   ├── App.css                # Custom styling
-│   │   ├── App-simple.jsx         # Mock wallet version
-│   │   └── main.jsx               # React entry point
-│   ├── index.html
-│   └── package.json
-├── contracts/                     # Hardhat smart contracts (optional)
-├── .env                          # Environment variables
-└── README.md                     # This file
-```
-
-## 🔗 Technology Stack
-
-### Blockchain
-
-- **Hedera Hashgraph**: Fast, secure, and eco-friendly DLT
-- **Hedera SDK**: JavaScript SDK for blockchain interactions
-- **HashScan**: Block explorer for viewing transactions
-
-### Storage
-
-- **IPFS**: Decentralized file storage via Pinata
-- **Pinata**: IPFS pinning service with global CDN
-
-### Backend
-
-- **Node.js**: JavaScript runtime
-- **Express.js**: Web application framework
-- **Axios**: HTTP client for IPFS uploads
-
-### Frontend
-
-- **React**: User interface library
-- **Vite**: Fast build tool and dev server
-- **Custom CSS**: Responsive styling without frameworks
-
-## 🎨 NFT Metadata Structure
-
-Each receipt NFT contains rich metadata stored on IPFS:
-
-```json
-{
-  "name": "Receipt from Coffee Shop Downtown",
-  "description": "Purchase receipt - Total: $12.25",
-  "image": "https://via.placeholder.com/400x300/f8f9fa/333?text=Receipt",
-  "attributes": [
-    { "trait_type": "Merchant", "value": "Coffee Shop Downtown" },
-    { "trait_type": "Total", "value": "$12.25" },
-    { "trait_type": "Date", "value": "9/29/2025" },
-    { "trait_type": "Items Count", "value": 2 }
-  ],
-  "properties": {
-    "receipt": {
-      "merchant": "Coffee Shop Downtown",
-      "items": [...],
-      "total": 12.25,
-      "date": "2025-09-29T16:30:45.123Z"
-    },
-    "type": "purchase_receipt"
-  }
-}
-```
+- Types, eligibility, mint, collection, benefits, discount, and monthly bonuses under `/api/nft`
+- Metadata pinned to IPFS; planned: include HCS proof fields into NFT metadata
 
-## 🔄 Transaction Flow
+## API surface (high level)
 
-1. **Customer makes purchase** → Merchant initiates receipt creation
-2. **Token Association** → Ensure customer can receive tokens
-3. **Metadata Creation** → Generate receipt data structure
-4. **IPFS Upload** → Store metadata on distributed network
-5. **NFT Minting** → Create unique receipt NFT on Hedera
-6. **Token Transfer** → Send NFT and RECV rewards to customer
-7. **Confirmation** → Provide HashScan links for verification
+- Users: register/login/profile/QR/wallet connect/associate/disconnect
+- Receipts: CRUD, categories, list, single, HCS verify/proof, NFT gallery
+- Token (HTS): info, balance, association-status
+- Points: balance, history, award, tiers, stats
+- Merchants: register/status/profile/stats; POS scan-qr/create-receipt; rewards-stats
+- Admin: auth, users, merchants, stats, NFT settings
+- AI Support: chat, suggestions, feedback, health
 
-## 🛡️ Security Considerations
+Full examples and payloads: see `API_REFERENCE.md`.
 
-### For Production Deployment:
+## Database schema (key tables)
 
-- **Private Key Management**: Use secure key storage (HSM, AWS KMS)
-- **Environment Variables**: Never commit sensitive data to git
-- **Rate Limiting**: Implement API rate limits
-- **Input Validation**: Sanitize all user inputs
-- **Customer Key Signing**: Require customer signatures for token association
-- **Multi-signature**: Use multi-sig for treasury operations
+- users: profile + wallet fields (`hedera_account_id`); HTS fields (`hts_account_id`, `hts_token_associated`, `hts_balance`, `hts_last_sync`)
+- receipts: core receipt data + HCS fields (`hcs_topic_id`, `hcs_sequence`, `hcs_timestamp`, `receipt_hash`, ...)
+- points_transactions: loyalty transactions; HTS sync (`hts_tx_id`, `hts_synced`)
+- hts_transactions: on-chain mint/burn/transfer log
+- hcs_events, hcs_topics: HCS topic messages and management
+- merchants, merchant_rewards; nft_types and related tables
 
-### Current MVP Limitations:
+SQLite is used locally; Postgres in production. See `run-migrations.js` and `backend/migrations/*`.
 
-- Uses operator key for all transactions (testing only)
-- Mock wallet connection (no real wallet integration)
-- No rate limiting or extensive input validation
-- Simplified error handling
+## Merchant POS flow
 
-## 🔮 Future Enhancements
+1. Merchant scans customer QR (user id + optional account id)
+2. Creates receipt via `/api/merchant/pos/create-receipt` or `/api/merchant/scan-qr`
+3. System auto-anchors receipt to HCS (fire-and-forget)
+4. Points awarded via `awardPoints` → HTS mint if the user is associated
+5. Notifications dispatched; merchant stats updated
 
-### Wallet Integration
+## Try it
 
-- Real HashPack wallet connection
-- WalletConnect integration
-- Multi-wallet support (Blade, Hashpack, etc.)
+1. Connect your HashPack (testnet) in the UI
+2. Use the RVP card to “Associate RVP Token” if needed
+3. Create a purchase from the merchant test script or UI — watch RVP balance update
+4. Open HashScan to view:
+   - Account: https://hashscan.io/testnet/account/0.0.<yourAccount>
+   - Token: https://hashscan.io/testnet/token/0.0.7154427
+   - HCS topic: https://hashscan.io/testnet/topic/0.0.7153725
 
-### Business Features
+## Troubleshooting
 
-- Merchant dashboard
-- Customer loyalty programs
-- Bulk receipt processing
-- Receipt analytics and insights
+- “Account is not associated”: Associate RVP in the UI first; backend will skip on-chain minting if not associated
+- “RVP shows 0.13 for 13 points”: Fixed via decimals scaling (token has 2 decimals; UI displays humanized balance)
+- “Missing columns/SQLite errors”: run `npm run migrate` in `backend`
+- “HTS service not initialized”: ensure `HTS_POINTS_TOKEN_ID` and valid `OPERATOR_ID/KEY` are set
 
-### Technical Improvements
+## Security notes
 
-- Smart contract integration
-- Advanced NFT utilities
-- Mobile app development
-- Mainnet deployment
+- Do not commit real operator/private keys; use env vars or a secret manager
+- Enforce rate limits (AI routes already limited); validate inputs (Joi used across routes)
+- Consider multisig for treasury; minimize operator-key surface in production
 
-## 📈 Performance & Costs
+## Tech stack
 
-### Hedera Testnet Performance:
+- Backend: Node.js, Express, @hashgraph/sdk, SQLite/Postgres, Joi, Nodemailer, SendGrid (optional), Socket.IO
+- Frontend: React, Vite, Tailwind, HashConnect, Redux Toolkit
+- Storage: IPFS (Pinata)
+- Network: Hedera testnet
 
-- **Transaction Speed**: ~3-5 seconds finality
-- **Network Fees**: $0.0001 USD per transaction
-- **Throughput**: 10,000+ TPS capability
-- **Energy Efficient**: Carbon-negative network
+## Useful scripts
 
-### IPFS Storage:
+- `backend/run-migrations.js` — applies HCS/HTS schema
+- `backend/test-hts-service.js` — quick HTS init/assoc/balance diagnostics
+- `backend/test-token-api.ps1` — token API checks on Windows
+- `backend/check-user-hts.js` — view user’s HTS fields and points sync
 
-- **Upload Speed**: ~1-2 seconds via Pinata
-- **Global CDN**: Fast worldwide access
-- **Redundancy**: Multiple pin locations
+## License
 
-## 🐛 Troubleshooting
+This is a hackathon/MVP-grade project for demonstration and exploration. See individual package licenses for third-party dependencies.
 
-### Common Issues:
-
-**"Failed to fetch" Error:**
-
-- Ensure backend server is running on port 3000
-- Check CORS configuration in server.js
-- Verify frontend is connecting to correct URL
-
-**Token Association Errors:**
-
-- Confirm account has sufficient HBAR (~$5)
-- Check if tokens are already associated
-- Verify operator account permissions
-
-**IPFS Upload Failures:**
-
-- Validate Pinata API credentials
-- Check network connectivity
-- Ensure JSON data is properly formatted
-
-**Hedera Transaction Errors:**
-
-- Verify operator ID and private key
-- Check account balance for transaction fees
-- Ensure proper transaction structure
-
-## 📄 License
-
-This project is for educational and demonstration purposes. See individual package licenses for third-party dependencies.
-
-## 🤝 Contributing
-
-This is an MVP demonstration project. For production use, consider:
-
-- Comprehensive testing suite
-- Security audit
-- Performance optimization
-- Documentation updates
-
-## 📞 Support
-
-For questions about Hedera development:
-
-- [Hedera Documentation](https://docs.hedera.com/)
-- [Hedera Discord](https://discord.gg/hedera)
-- [HashScan Explorer](https://hashscan.io/testnet)
-
----
-
-**Built with ❤️ on Hedera Hashgraph**
-
-_Transforming everyday receipts into valuable digital assets_ 🧾→💎
+— Built with ❤️ on Hedera

@@ -3,6 +3,9 @@ const router = express.Router();
 const { query } = require("./database");
 const { authenticateToken } = require("./auth");
 const Joi = require("joi");
+const {
+  getHCSReceiptService,
+} = require("./services/blockchain/hcsReceiptService");
 
 // Helper function to parse items - handles both PostgreSQL JSONB and SQLite TEXT
 const parseReceiptItems = (items) => {
@@ -231,6 +234,33 @@ router.post("/", authenticateToken, async (req, res) => {
 
     console.log(`✅ Receipt created: ${storeName} - $${amount} (${category})`);
 
+    // Auto-anchor to Hedera HCS (non-blocking)
+    try {
+      const hcsService = getHCSReceiptService();
+      // Fire and forget; do not await to avoid delaying API response
+      hcsService
+        .anchorReceipt({
+          id: receipt.id,
+          user_id: userId,
+          merchant_id: merchantId || null,
+          amount: receipt.amount,
+          currency: "USD",
+          receipt_date: receipt.receipt_date,
+          items: parseReceiptItems(receipt.items),
+        })
+        .then(() =>
+          console.log(`🔗 Receipt ${receipt.id} anchored to HCS (auto)`)
+        )
+        .catch((err) =>
+          console.warn(
+            `⚠️ Auto-anchoring failed for receipt ${receipt.id}:`,
+            err.message
+          )
+        );
+    } catch (e) {
+      console.warn("⚠️ Auto-anchoring setup error:", e.message);
+    }
+
     res.status(201).json({
       message: "Receipt created successfully",
       receipt: {
@@ -243,6 +273,11 @@ router.post("/", authenticateToken, async (req, res) => {
         isVerified: receipt.is_verified,
         nftCreated: receipt.nft_created,
         createdAt: receipt.created_at,
+        // HCS fields (will be null initially, populated after async anchoring)
+        hcsTopicId: receipt.hcs_topic_id,
+        hcsSequence: receipt.hcs_sequence,
+        hcsConsensusTimestamp: receipt.hcs_consensus_timestamp,
+        hcsTransactionHash: receipt.hcs_transaction_hash,
       },
     });
   } catch (error) {
@@ -343,6 +378,11 @@ router.get("/", authenticateToken, async (req, res) => {
       nftCreated: receipt.nft_created,
       nftTokenId: receipt.nft_token_id,
       createdAt: receipt.created_at,
+      // HCS fields for on-chain verification
+      hcsTopicId: receipt.hcs_topic_id,
+      hcsSequence: receipt.hcs_sequence,
+      hcsConsensusTimestamp: receipt.hcs_consensus_timestamp,
+      hcsTransactionHash: receipt.hcs_transaction_hash,
     }));
 
     res.json({
@@ -415,6 +455,11 @@ router.get("/:id", authenticateToken, async (req, res) => {
         nftMetadataUrl: receipt.nft_metadata_url,
         createdAt: receipt.created_at,
         updatedAt: receipt.updated_at,
+        // HCS fields for on-chain verification
+        hcsTopicId: receipt.hcs_topic_id,
+        hcsSequence: receipt.hcs_sequence,
+        hcsConsensusTimestamp: receipt.hcs_consensus_timestamp,
+        hcsTransactionHash: receipt.hcs_transaction_hash,
       },
     });
   } catch (error) {

@@ -24,6 +24,11 @@ const merchantRoutes = require("./merchantRoutes");
 const pointsRoutes = require("./pointsRoutes");
 const aiSupportRoutes = require("./aiSupportRoutes");
 const nftRoutes = require("./nftRoutes");
+const tokenRoutes = require("./routes/tokenRoutes");
+const {
+  initializeBlockchainServices,
+} = require("./services/blockchain/initBlockchain");
+const hcsReceiptRoutes = require("./routes/hcsReceipts");
 
 const app = express();
 app.use(bodyParser.json({ limit: "10mb" }));
@@ -121,6 +126,12 @@ async function startServer() {
     // Add receipt routes
     app.use("/api/receipts", receiptRoutes);
 
+    // Initialize blockchain services (Hedera HCS/HTS)
+    await initializeBlockchainServices();
+
+    // Add HCS receipt routes (anchoring, verification, proof)
+    app.use("/api/receipts", hcsReceiptRoutes);
+
     // Add merchant routes (both /merchant and /merchants for compatibility)
     app.use("/api/merchant", merchantRoutes);
     app.use("/api/merchants", merchantRoutes);
@@ -134,6 +145,9 @@ async function startServer() {
     // Add NFT routes
     app.use("/api/nft", nftRoutes);
 
+    // Add token (HTS) routes
+    app.use("/api/token", tokenRoutes);
+
     // Add admin routes
     const { router: adminRoutes } = require("./adminRoutes");
     app.use("/api/admin", adminRoutes);
@@ -143,6 +157,8 @@ async function startServer() {
     console.log("✅ Points reward system initialized");
     console.log("✅ AI Support system initialized");
     console.log("✅ NFT Rewards system initialized");
+    console.log("✅ Token (HTS) API initialized");
+    console.log("✅ Blockchain (Hedera) services initialized");
     console.log("✅ Merchant management system initialized");
     console.log("✅ Admin management system initialized");
   } catch (error) {

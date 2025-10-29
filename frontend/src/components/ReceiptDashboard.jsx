@@ -63,7 +63,47 @@ const ReceiptDashboard = () => {
         const data = await response.json();
         console.log("📊 Receipts data:", data);
         console.log("📝 Number of receipts:", data.receipts?.length || 0);
-        setReceipts(data.receipts || []);
+
+        // Normalize HCS fields and verification flag
+        const normalizeReceipt = (r) => {
+          const hcsTopicId =
+            r.hcsTopicId || r.hcs_topic_id || r.topicId || r.hcs_topicid;
+          const hcsSequence = r.hcsSequence || r.hcs_sequence || r.sequence;
+          const hcsConsensusTimestamp =
+            r.hcsConsensusTimestamp ||
+            r.hcs_consensus_timestamp ||
+            r.consensusTimestamp;
+          const isVerified = r.isVerified ?? Boolean(hcsTopicId && hcsSequence);
+
+          // Debug logging for HCS fields
+          if (hcsTopicId || hcsSequence) {
+            console.log(
+              `🔍 Receipt ${r.id}: topic=${hcsTopicId}, seq=${hcsSequence}, verified=${isVerified}`
+            );
+          }
+
+          return {
+            ...r,
+            hcsTopicId,
+            hcsSequence,
+            hcsConsensusTimestamp,
+            isVerified,
+          };
+        };
+
+        const normalized = Array.isArray(data.receipts)
+          ? data.receipts.map(normalizeReceipt)
+          : [];
+        console.log(
+          "✅ Normalized receipts:",
+          normalized.map((r) => ({
+            id: r.id,
+            hcsTopicId: r.hcsTopicId,
+            hcsSequence: r.hcsSequence,
+            isVerified: r.isVerified,
+          }))
+        );
+        setReceipts(normalized);
       } else {
         const errorData = await response.text();
         console.error(
@@ -98,6 +138,22 @@ const ReceiptDashboard = () => {
 
   const formatAmount = (amount) => {
     return `$${parseFloat(amount).toFixed(2)}`;
+  };
+
+  // Hedera helpers
+  const formatHederaTimestamp = (ts) => {
+    if (!ts) return null;
+    if (typeof ts === "number") return new Date(ts * 1000).toLocaleString();
+    if (typeof ts === "string") {
+      const match = ts.match(/^(\d+)(?:\.(\d+))?$/);
+      if (match) {
+        const seconds = parseInt(match[1], 10);
+        if (!isNaN(seconds)) return new Date(seconds * 1000).toLocaleString();
+      }
+      const d = new Date(ts);
+      if (!isNaN(d.getTime())) return d.toLocaleString();
+    }
+    return String(ts);
   };
 
   const getCategoryData = (categoryId) => {
@@ -244,6 +300,13 @@ const ReceiptDashboard = () => {
         ) : (
           receipts.map((receipt) => {
             const categoryData = getCategoryData(receipt.category);
+            const hasNft =
+              Boolean(receipt.nftCreated) ||
+              Boolean(receipt.nftId) ||
+              Boolean(receipt.nft_token_id);
+            const hederaAnchored = Boolean(
+              receipt.hcsTopicId && receipt.hcsSequence
+            );
             return (
               <div
                 key={receipt.id}
@@ -258,12 +321,19 @@ const ReceiptDashboard = () => {
                     {categoryData.icon}
                   </div>
                   <div className="receipt-actions">
-                    {receipt.nftCreated && (
-                      <span className="nft-badge">🎨 NFT</span>
-                    )}
-                    {receipt.isVerified && (
-                      <span className="verified-badge">✅</span>
-                    )}
+                    {hasNft ? (
+                      <span className="nft-badge" title="NFT minted">
+                        🎨 NFT Minted
+                      </span>
+                    ) : null}
+                    {hederaAnchored ? (
+                      <span
+                        className="hedera-badge"
+                        title={`Anchored on Hedera (seq ${receipt.hcsSequence})`}
+                      >
+                        ✅ Verified on Hedera · seq {receipt.hcsSequence}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
 
@@ -331,6 +401,48 @@ const ReceiptDashboard = () => {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                )}
+
+                {/* Verified on Hedera badge and HashScan link */}
+                {selectedReceipt.hcsTopicId && selectedReceipt.hcsSequence && (
+                  <div className="hedera-verification">
+                    <div className="hedera-verified-line">
+                      ✅ Verified on Hedera
+                    </div>
+                    <div className="hedera-meta">
+                      <div>
+                        <strong>HCS Topic:</strong> {selectedReceipt.hcsTopicId}
+                      </div>
+                      <div>
+                        <strong>Sequence:</strong> {selectedReceipt.hcsSequence}
+                      </div>
+                      {selectedReceipt.hcsConsensusTimestamp && (
+                        <div>
+                          <strong>Timestamp:</strong>{" "}
+                          {formatHederaTimestamp(
+                            selectedReceipt.hcsConsensusTimestamp
+                          )}
+                        </div>
+                      )}
+                      <div className="hashscan-links">
+                        <a
+                          href={`https://hashscan.io/testnet/topic/${selectedReceipt.hcsTopicId}?tid=${selectedReceipt.hcsSequence}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          View on HashScan (testnet)
+                        </a>
+                        <span className="dot-sep">•</span>
+                        <a
+                          href={`https://hashscan.io/mainnet/topic/${selectedReceipt.hcsTopicId}?tid=${selectedReceipt.hcsSequence}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          View on HashScan (mainnet)
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

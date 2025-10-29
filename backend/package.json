@@ -11,7 +11,9 @@
     "production": "set NODE_ENV=production && node src/server.js",
     "test": "node test-api.js",
     "migrate": "node run-migrations.js",
-    "verify-schema": "node verify-db-schema.js"
+    "verify-schema": "node verify-db-schema.js",
+    "blockchain:setup": "node setup-blockchain.js",
+    "blockchain:init": "node src/services/blockchain/initBlockchain.js"
   },
   "engines": {
     "node": ">=18.0.0"
