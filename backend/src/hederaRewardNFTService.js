@@ -118,7 +118,12 @@ class RewardNFTService {
   /**
    * Generate metadata for reward NFT (simplified for Hedera's 100-byte limit)
    */
-  generateRewardNFTMetadata(nftType, userAddress, serialNumber) {
+  generateRewardNFTMetadata(
+    nftType,
+    userAddress,
+    serialNumber,
+    hcsProof = null
+  ) {
     // Hedera has a 100-byte metadata limit, so we keep it minimal
     // Full metadata will be stored on IPFS
     const metadata = {
@@ -130,7 +135,43 @@ class RewardNFTService {
           : "",
       type: nftType.animal_type,
       tier: nftType.tier,
+      attributes: [
+        { trait_type: "Tier", value: nftType.tier },
+        { trait_type: "Animal", value: nftType.animal_type },
+        { trait_type: "Discount", value: `${nftType.discount_percentage}%` },
+        {
+          trait_type: "Monthly Bonus",
+          value: `${nftType.monthly_bonus_points} RVP`,
+        },
+      ],
     };
+
+    // Add HCS proof if available (proves NFT is backed by verified receipts)
+    if (hcsProof && hcsProof.hcs_topic_id) {
+      metadata.attributes.push(
+        { trait_type: "Receipt Verified", value: "true" },
+        { trait_type: "HCS Topic", value: hcsProof.hcs_topic_id },
+        {
+          trait_type: "HCS Sequence",
+          value: hcsProof.hcs_sequence?.toString() || "pending",
+        }
+      );
+
+      metadata.properties = {
+        receiptHash: hcsProof.receipt_hash,
+        hcsProof: {
+          topicId: hcsProof.hcs_topic_id,
+          sequence: hcsProof.hcs_sequence,
+          timestamp: hcsProof.hcs_timestamp,
+          consensusTimestamp: hcsProof.consensus_timestamp,
+          hashscanUrl: hcsProof.hcs_sequence
+            ? `https://hashscan.io/testnet/topic/${hcsProof.hcs_topic_id}/message/${hcsProof.hcs_sequence}`
+            : null,
+        },
+        verified: true,
+        verificationMethod: "Hedera Consensus Service (HCS)",
+      };
+    }
 
     return metadata;
   }
@@ -170,7 +211,7 @@ class RewardNFTService {
   /**
    * Mint a reward NFT and transfer to user's wallet
    */
-  async mintRewardNFT(nftType, userAccountId, pointsSpent) {
+  async mintRewardNFT(nftType, userAccountId, pointsSpent, userId = null) {
     if (!this.isInitialized) await this.initialize();
 
     try {
@@ -184,14 +225,47 @@ class RewardNFTService {
       console.log("👤 User:", userAccountId);
       console.log("💰 Points Spent:", pointsSpent);
 
+      // Fetch HCS proof from user's most recent verified receipt (if userId provided)
+      let hcsProof = null;
+      if (userId) {
+        try {
+          const { query } = require("./database");
+          const receiptResult = await query(
+            `SELECT hcs_topic_id, hcs_sequence, hcs_timestamp, receipt_hash, consensus_timestamp
+             FROM receipts 
+             WHERE user_id = $1 
+               AND hcs_topic_id IS NOT NULL 
+               AND hcs_sequence IS NOT NULL
+             ORDER BY created_at DESC 
+             LIMIT 1`,
+            [userId]
+          );
+
+          if (receiptResult.rows.length > 0) {
+            hcsProof = receiptResult.rows[0];
+            console.log("✅ Found HCS proof from receipt:", {
+              topicId: hcsProof.hcs_topic_id,
+              sequence: hcsProof.hcs_sequence,
+              hash: hcsProof.receipt_hash?.substring(0, 10) + "...",
+            });
+          } else {
+            console.log("⚠️  No HCS-verified receipts found for user");
+          }
+        } catch (err) {
+          console.warn("⚠️  Could not fetch HCS proof:", err.message);
+          // Continue without HCS proof
+        }
+      }
+
       // Generate serial number (we'll use timestamp for uniqueness)
       const serialNumber = Date.now();
 
-      // Generate metadata
+      // Generate metadata with HCS proof
       const metadata = this.generateRewardNFTMetadata(
         nftType,
         userAccountId,
-        serialNumber
+        serialNumber,
+        hcsProof
       );
 
       // Upload full metadata to IPFS

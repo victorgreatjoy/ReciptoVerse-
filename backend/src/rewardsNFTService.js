@@ -248,7 +248,8 @@ async function mintNFTForUser(userId, nftTypeId) {
     const hederaMintResult = await hederaRewardNFTService.mintRewardNFT(
       nftType,
       userAccountId,
-      nftType.point_cost
+      nftType.point_cost,
+      userId // Pass userId to fetch HCS proof
     );
 
     if (!hederaMintResult.success) {

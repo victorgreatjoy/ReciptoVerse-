@@ -124,8 +124,52 @@ const useHashConnect = () => {
       await getInitPromise();
       const instance = getHashConnectInstance();
 
-      // Open pairing modal
-      await instance.openPairingModal();
+      // Detect if user is on mobile
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        console.log("📱 Mobile detected - using deep link connection");
+
+        // Get pairing string for deep linking
+        const pairingString = instance.pairingString;
+
+        if (pairingString) {
+          // Create HashPack deep link (auto-opens the app!)
+          const hashpackDeepLink = `hashpack://hcs/connect?pairingString=${encodeURIComponent(
+            pairingString
+          )}`;
+
+          // Also support Blade wallet
+          const bladeDeepLink = `blade://hcs/connect?pairingString=${encodeURIComponent(
+            pairingString
+          )}`;
+
+          console.log("🔗 Opening wallet app via deep link...");
+          console.log("   HashPack link:", hashpackDeepLink);
+
+          // Try to open HashPack first (most common)
+          window.location.href = hashpackDeepLink;
+
+          // Show a helpful message
+          setTimeout(() => {
+            console.log(
+              "💡 If HashPack didn't open, you can also use Blade wallet"
+            );
+          }, 1000);
+
+          // Fallback to modal after 2 seconds if deep link failed
+          setTimeout(() => {
+            instance.openPairingModal();
+          }, 2000);
+        } else {
+          // Fallback to standard modal
+          await instance.openPairingModal();
+        }
+      } else {
+        console.log("💻 Desktop detected - using pairing modal with QR code");
+        // Desktop: show modal with QR code for mobile scanning
+        await instance.openPairingModal();
+      }
 
       // Set a timeout to handle stuck pairing
       setTimeout(() => {

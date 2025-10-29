@@ -318,45 +318,47 @@ if (isAssociated) {- Proof bundle: GET `/api/receipts/:id/proof`
 
 - Points: balance, history, award, tiers, stats
 
-### **NFT Rewards** — Gamified Loyalty- Merchants: register/status/profile/stats; POS scan-qr/create-receipt; rewards-stats
+### **NFT Rewards** — Gamified Loyalty
 
-- Admin: auth, users, merchants, stats, NFT settings
+**Token ID**: `0.0.6927730` (Receipt NFT Collection)
 
-**Token ID**: `0.0.6927730` (Receipt NFT Collection)- AI Support: chat, suggestions, feedback, health
-
-
-
-**Tiers:**Full examples and payloads: see `API_REFERENCE.md`.
-
+**Tiers:**
 - 🐰 **Bronze Rabbit** (100 points) — 5% discount, 10 bonus points/month
-
-- 🦊 **Silver Fox** (500 points) — 10% discount, 25 bonus points/month  ## Database schema (key tables)
-
+- 🦊 **Silver Fox** (500 points) — 10% discount, 25 bonus points/month
 - 🦅 **Gold Eagle** (1000 points) — 15% discount, 50 bonus points/month
 
-- users: profile + wallet fields (`hedera_account_id`); HTS fields (`hts_account_id`, `hts_token_associated`, `hts_balance`, `hts_last_sync`)
-
-**Metadata (IPFS via Pinata):**- receipts: core receipt data + HCS fields (`hcs_topic_id`, `hcs_sequence`, `hcs_timestamp`, `receipt_hash`, ...)
-
-```json- points_transactions: loyalty transactions; HTS sync (`hts_tx_id`, `hts_synced`)
-
-{- hts_transactions: on-chain mint/burn/transfer log
-
-  "name": "Gold Eagle #42",- hcs_events, hcs_topics: HCS topic messages and management
-
-  "description": "Premium tier loyalty NFT",- merchants, merchant_rewards; nft_types and related tables
-
+**Metadata (IPFS via Pinata) with HCS Proof:**
+```json
+{
+  "name": "Gold Eagle #42",
+  "description": "Premium tier loyalty NFT",
   "image": "ipfs://QmSEjCZ5FcuXUvvPmeAcfVhYH2rYEzPLmX8i5hGmwZo7YP",
-
-  "attributes": [SQLite is used locally; Postgres in production. See `run-migrations.js` and `backend/migrations/*`.
-
+  "attributes": [
     { "trait_type": "Tier", "value": "Gold" },
-
-    { "trait_type": "Animal", "value": "Eagle" },## Merchant POS flow
-
+    { "trait_type": "Animal", "value": "Eagle" },
     { "trait_type": "Discount", "value": "15%" },
+    { "trait_type": "Monthly Bonus", "value": "50 RVP" },
+    { "trait_type": "Receipt Verified", "value": "true" },
+    { "trait_type": "HCS Topic", "value": "0.0.7153725" },
+    { "trait_type": "HCS Sequence", "value": "42" }
+  ],
+  "properties": {
+    "receiptHash": "a3f5c8d2e9b1f4a7c6d8...",
+    "hcsProof": {
+      "topicId": "0.0.7153725",
+      "sequence": 42,
+      "timestamp": "2025-10-29T12:00:00.000Z",
+      "hashscanUrl": "https://hashscan.io/testnet/topic/0.0.7153725/message/42"
+    },
+    "verified": true,
+    "verificationMethod": "Hedera Consensus Service (HCS)"
+  }
+}
+```
 
-    { "trait_type": "Monthly Bonus", "value": "50 RVP" }1. Merchant scans customer QR (user id + optional account id)
+**🔗 Cross-Service Integration**: Each NFT is cryptographically linked to a verified receipt on HCS, proving authenticity and enabling third-party verification via HashScan.
+
+---
 
   ]2. Creates receipt via `/api/merchant/pos/create-receipt` or `/api/merchant/scan-qr`
 
