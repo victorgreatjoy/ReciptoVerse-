@@ -84,9 +84,13 @@
   gap: 0.5rem;
   margin: 1rem 0 2rem 0;
   padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: linear-gradient(
+    135deg,
+    rgba(219, 234, 254, 0.3) 0%,
+    rgba(191, 219, 254, 0.3) 100%
+  );
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 15px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -98,9 +102,9 @@
 }
 
 .nav-tab {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #1e40af;
   padding: 0.75rem 1.5rem;
   border-radius: 10px;
   font-weight: 500;
@@ -112,22 +116,22 @@
 }
 
 .nav-tab:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(96, 165, 250, 0.3);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #1d4ed8;
   transform: translateY(-1px);
 }
 
 .nav-tab.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: rgba(102, 126, 234, 0.5);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: rgba(59, 130, 246, 0.5);
   color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .nav-tab.active:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
 }
 
 /* Responsive nav tabs */
@@ -135,11 +139,23 @@
   .nav-tabs {
     margin: 0.5rem 0 1.5rem 0;
     padding: 0.25rem;
+    background: linear-gradient(
+      135deg,
+      rgba(219, 234, 254, 0.5) 0%,
+      rgba(147, 197, 253, 0.5) 100%
+    );
+    border: 2px solid rgba(59, 130, 246, 0.3);
   }
 
   .nav-tab {
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .nav-tab.active {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.5);
   }
 }
 

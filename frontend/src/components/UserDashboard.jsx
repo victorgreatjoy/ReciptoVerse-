@@ -105,32 +105,12 @@ const UserDashboard = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div
-        className="dashboard-tabs"
-        style={{
-          display: "flex",
-          gap: "8px",
-          marginBottom: "32px",
-          background: "white",
-          borderRadius: "12px",
-          padding: "8px",
-          border: "2px solid #3b82f6",
-        }}
-      >
+      <div className="dashboard-tabs">
         <button
           className={`tab-button ${activeTab === "overview" ? "active" : ""}`}
           onClick={() => {
             console.log("Overview tab clicked");
             setActiveTab("overview");
-          }}
-          style={{
-            padding: "12px 24px",
-            borderRadius: "8px",
-            border: "none",
-            cursor: "pointer",
-            background: activeTab === "overview" ? "#3b82f6" : "transparent",
-            color: activeTab === "overview" ? "white" : "#64748b",
-            fontWeight: "600",
           }}
         >
           📊 Overview
@@ -141,15 +121,6 @@ const UserDashboard = () => {
             console.log("Rewards tab clicked");
             setActiveTab("rewards");
           }}
-          style={{
-            padding: "12px 24px",
-            borderRadius: "8px",
-            border: "none",
-            cursor: "pointer",
-            background: activeTab === "rewards" ? "#3b82f6" : "transparent",
-            color: activeTab === "rewards" ? "white" : "#64748b",
-            fontWeight: "600",
-          }}
         >
           🏆 Rewards
         </button>
@@ -158,15 +129,6 @@ const UserDashboard = () => {
           onClick={() => {
             console.log("QR Code tab clicked");
             setActiveTab("qr-code");
-          }}
-          style={{
-            padding: "12px 24px",
-            borderRadius: "8px",
-            border: "none",
-            cursor: "pointer",
-            background: activeTab === "qr-code" ? "#3b82f6" : "transparent",
-            color: activeTab === "qr-code" ? "white" : "#64748b",
-            fontWeight: "600",
           }}
         >
           📱 QR Code

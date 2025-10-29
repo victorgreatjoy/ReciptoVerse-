@@ -97,7 +97,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -105,19 +105,21 @@ button {
 }
 
 button:hover {
-  border-color: #646cff;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 button:active {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+  background: #94a3b8;
 }
 
 /* Responsive breakpoints */
@@ -145,7 +147,8 @@ button:disabled {
 
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 3px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
 }
 
 @media (prefers-color-scheme: light) {
@@ -154,9 +157,10 @@ button:focus-visible {
     background-color: #ffffff;
   }
   a:hover {
-    color: #747bff;
+    color: #3b82f6;
   }
   button {
-    background-color: #f9f9f9;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
   }
 }
