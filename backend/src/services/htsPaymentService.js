@@ -21,7 +21,7 @@ const operatorKey = PrivateKey.fromStringECDSA(config.hedera.operatorKey);
 client.setOperator(config.hedera.operatorId, operatorKey);
 client.setDefaultMaxTransactionFee(new Hbar(100));
 
-const RVP_TOKEN_ID = config.hedera.rvpTokenId;
+const RVP_TOKEN_ID = config.hedera.recvTokenId; // RVP is the RECV fungible token
 const TREASURY_ACCOUNT = config.hedera.operatorId;
 
 /**
@@ -29,6 +29,15 @@ const TREASURY_ACCOUNT = config.hedera.operatorId;
  */
 async function getUserRVPBalance(accountId) {
   try {
+    if (!RVP_TOKEN_ID) {
+      console.error("❌ RVP_TOKEN_ID not configured");
+      throw new Error("RVP token not configured");
+    }
+
+    console.log(
+      `🔍 Checking RVP balance for ${accountId} (token: ${RVP_TOKEN_ID})`
+    );
+
     const balance = await new AccountBalanceQuery()
       .setAccountId(accountId)
       .execute(client);
