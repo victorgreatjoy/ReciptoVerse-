@@ -152,6 +152,40 @@ async function startServer() {
           "✅ hts_token_associated column already exists in users table"
         );
       }
+
+      // Check points_transactions table for hts_tx_id
+      const checkHtsTxIdColumn = await query(`
+        SELECT column_name FROM information_schema.columns WHERE table_name = 'points_transactions' AND column_name = 'hts_tx_id'
+      `);
+      if (checkHtsTxIdColumn.rows.length === 0) {
+        console.log(
+          "⚠️ hts_tx_id column missing in points_transactions table, adding it..."
+        );
+        await query(
+          `ALTER TABLE points_transactions ADD COLUMN hts_tx_id TEXT`
+        );
+        console.log("✅ Added hts_tx_id column to points_transactions table");
+      } else {
+        console.log(
+          "✅ hts_tx_id column already exists in points_transactions table"
+        );
+      }
+
+      // Check users table for hts_balance
+      const checkHtsBalanceColumn = await query(`
+        SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'hts_balance'
+      `);
+      if (checkHtsBalanceColumn.rows.length === 0) {
+        console.log(
+          "⚠️ hts_balance column missing in users table, adding it..."
+        );
+        await query(
+          `ALTER TABLE users ADD COLUMN hts_balance INTEGER DEFAULT 0`
+        );
+        console.log("✅ Added hts_balance column to users table");
+      } else {
+        console.log("✅ hts_balance column already exists in users table");
+      }
     }
   } catch (err) {
     console.error("❌ Error ensuring HTS columns:", err);
