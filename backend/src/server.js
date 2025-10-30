@@ -101,19 +101,38 @@ const PINATA_JWT = config.ipfs.pinataJwt;
 
 // Initialize database and user routes
 async function startServer() {
-  // Ensure hts_account_id column exists in receipts table before anything else
+  // Ensure hts_account_id column exists in receipts and users tables before anything else
   try {
     const { query, pool } = require("./database");
     if (pool) {
-      const checkColumn = await query(`
+      // Check receipts table
+      const checkReceiptsColumn = await query(`
         SELECT column_name FROM information_schema.columns WHERE table_name = 'receipts' AND column_name = 'hts_account_id'
       `);
-      if (checkColumn.rows.length === 0) {
-        console.log("⚠️ hts_account_id column missing, adding it...");
+      if (checkReceiptsColumn.rows.length === 0) {
+        console.log(
+          "⚠️ hts_account_id column missing in receipts table, adding it..."
+        );
         await query(`ALTER TABLE receipts ADD COLUMN hts_account_id TEXT`);
         console.log("✅ Added hts_account_id column to receipts table");
       } else {
-        console.log("✅ hts_account_id column already exists");
+        console.log(
+          "✅ hts_account_id column already exists in receipts table"
+        );
+      }
+
+      // Check users table
+      const checkUsersColumn = await query(`
+        SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'hts_account_id'
+      `);
+      if (checkUsersColumn.rows.length === 0) {
+        console.log(
+          "⚠️ hts_account_id column missing in users table, adding it..."
+        );
+        await query(`ALTER TABLE users ADD COLUMN hts_account_id TEXT`);
+        console.log("✅ Added hts_account_id column to users table");
+      } else {
+        console.log("✅ hts_account_id column already exists in users table");
       }
     }
   } catch (err) {
