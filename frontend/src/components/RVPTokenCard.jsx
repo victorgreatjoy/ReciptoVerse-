@@ -14,7 +14,9 @@ const RVPTokenCard = () => {
   const [isAssociated, setIsAssociated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAssociating, setIsAssociating] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState(null);
+  const [syncMessage, setSyncMessage] = useState(null);
 
   // Debug logging
   useEffect(() => {
@@ -139,6 +141,48 @@ const RVPTokenCard = () => {
     }
   };
 
+  const handleSyncPoints = async () => {
+    setIsSyncing(true);
+    setError(null);
+    setSyncMessage(null);
+
+    try {
+      const jwt = localStorage.getItem("receiptoverse_token");
+      if (!jwt) {
+        throw new Error("Please log in first");
+      }
+
+      const response = await fetch(`${API_BASE}/api/users/sync-rvp-tokens`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwt}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to sync points");
+      }
+
+      console.log("✅ Points synced:", data);
+      setSyncMessage(data.message);
+
+      // Refresh balance after sync
+      setTimeout(() => {
+        fetch(`${API_BASE}/api/token/balance/${accountId}`)
+          .then((res) => res.json())
+          .then((data) => setBalance(data));
+      }, 2000);
+    } catch (err) {
+      console.error("❌ Sync failed:", err);
+      setError(err.message || "Failed to sync points. Please try again.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   // Not connected state
   if (!isConnected) {
     return (
@@ -201,6 +245,21 @@ const RVPTokenCard = () => {
         <h3>{balance ? balance.displayBalance : "0.00"}</h3>
         <p>RVP Points (Hedera)</p>
         <span className="stat-badge success">On-chain ✓</span>
+
+        {/* Sync button if balance is 0 but might have database points */}
+        {balance && parseFloat(balance.displayBalance) === 0 && (
+          <button
+            className="sync-btn"
+            onClick={handleSyncPoints}
+            disabled={isSyncing}
+          >
+            {isSyncing ? "Syncing..." : "🔄 Sync Database Points"}
+          </button>
+        )}
+
+        {syncMessage && <div className="success-message">{syncMessage}</div>}
+        {error && <div className="error-message">{error}</div>}
+
         {tokenInfo && (
           <a
             href={`https://hashscan.io/${tokenInfo.network}/account/${accountId}`}

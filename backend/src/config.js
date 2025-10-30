@@ -64,7 +64,7 @@ class EnvironmentConfig {
       network: process.env.HEDERA_NETWORK || "testnet",
       operatorId: process.env.OPERATOR_ID,
       operatorKey: process.env.OPERATOR_KEY,
-      recvTokenId: process.env.RECV_TOKEN_ID,
+      recvTokenId: process.env.HTS_POINTS_TOKEN_ID || process.env.RECV_TOKEN_ID, // Use HTS_POINTS_TOKEN_ID (new RVP token)
       rnftTokenId: process.env.RNFT_TOKEN_ID,
       isMainnet: process.env.HEDERA_NETWORK === "mainnet",
       isTestnet: process.env.HEDERA_NETWORK === "testnet",
