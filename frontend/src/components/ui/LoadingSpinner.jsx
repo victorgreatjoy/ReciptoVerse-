@@ -18,12 +18,12 @@ const LoadingSpinner = ({
   };
 
   const colors = {
-    primary: "text-blue-500", // Changed to blue
-    secondary: "text-blue-600",
-    accent: "text-blue-400",
+    primary: "text-primary-500",
+    secondary: "text-secondary-500",
+    accent: "text-accent-500",
     white: "text-white",
-    earth: "text-blue-500", // Changed to blue
-    sunset: "text-blue-600",
+    earth: "text-earth-500",
+    sunset: "text-sunset-500",
   };
 
   const spinnerClasses = classNames(
@@ -42,15 +42,15 @@ const LoadingSpinner = ({
       {...props}
     >
       <circle
-        className="opacity-20"
+        className="opacity-25"
         cx="12"
         cy="12"
         r="10"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="4"
       />
       <path
-        className="opacity-90"
+        className="opacity-75"
         fill="currentColor"
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
       />

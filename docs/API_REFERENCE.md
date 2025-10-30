@@ -1,73 +1,28 @@
-# ReceiptoVerse API Reference
+# API Reference
 
-**Complete REST API Documentation for ReceiptoVerse Platform**
+This document explains how to use the ReceiptoVerse API, including Receipts and Blockchain (Hedera HCS) endpoints, plus key Merchant POS endpoints.
 
-This document provides comprehensive API documentation for all ReceiptoVerse endpoints, including:
+- Base URL (local dev): http://localhost:3000
+- Base URL (production): https://your-domain.com
+- All JSON bodies use application/json.
+- Auth:
+  - User endpoints: Authorization: Bearer <JWT>
+  - Merchant POS endpoints: X-API-Key: <merchant_api_key>
+  - Public verification endpoint requires no auth.
 
-- User authentication and wallet management
-- Receipt CRUD operations with automatic HCS anchoring
-- Hedera Consensus Service (HCS) verification endpoints
-- Hedera Token Service (HTS) RVP token operations
-- NFT reward system with HCS proof metadata
-- Merchant POS integration
-- Points and loyalty system
-
-## 🔗 Base URLs
-
-- **Local Development**: `http://localhost:3000`
-- **Production**: `https://your-domain.com` (update after deployment)
-
-## 🔐 Authentication
-
-| Auth Type | Header                          | Used For                      |
-| --------- | ------------------------------- | ----------------------------- |
-| JWT Token | `Authorization: Bearer <token>` | User endpoints                |
-| API Key   | `X-API-Key: <merchant_key>`     | Merchant POS endpoints        |
-| Public    | None                            | Public verification endpoints |
-
-## 🌐 Response Format
-
-All endpoints return JSON with this structure:
-
-**Success Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    /* endpoint-specific data */
-  },
-  "message": "Optional success message"
-}
-```
-
-**Error Response:**
-
-```json
-{
-  "success": false,
-  "error": "Error message",
-  "details": {
-    /* optional error details */
-  }
-}
-```
+Note for Windows PowerShell: Examples are provided with both curl and Invoke-RestMethod when helpful.
 
 ---
 
 ## Table of Contents
 
 1. [Authentication](#authentication)
-2. [User Management](#user-management)
-3. [Wallet Integration](#wallet-integration)
-4. [Receipts](#receipts)
-5. [Hedera HCS Verification](#hedera-hcs-verification)
-6. [Hedera HTS Token](#hedera-hts-token-rvp)
-7. [NFT Rewards](#nft-rewards)
-8. [Points System](#points-system)
-9. [Merchant POS](#merchant-pos-endpoints)
-10. [Admin Endpoints](#admin-endpoints)
-11. [Common Errors](#common-error-responses)
+2. [Receipts](#receipts)
+3. [Blockchain (Hedera HCS)](#blockchain-hedera-hcs-endpoints)
+4. [Merchant POS](#merchant-pos-endpoints)
+5. [Token (HTS)](#token-hts-endpoints)
+6. [Common Error Responses](#common-error-responses)
+7. [Tips and Troubleshooting](#tips-and-troubleshooting)
 
 ---
 

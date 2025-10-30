@@ -124,15 +124,6 @@ const UserDashboard = () => {
         >
           🏆 Rewards
         </button>
-        <button
-          className={`tab-button ${activeTab === "qr-code" ? "active" : ""}`}
-          onClick={() => {
-            console.log("QR Code tab clicked");
-            setActiveTab("qr-code");
-          }}
-        >
-          📱 QR Code
-        </button>
       </div>
 
       {/* Tab Content */}
@@ -162,17 +153,6 @@ const UserDashboard = () => {
                 <h3>{parseFloat(user.recvBalance || 0).toFixed(2)}</h3>
                 <p>RECV Tokens</p>
                 <span className="stat-badge">Ready to stake</span>
-              </div>
-            </div>
-
-            <div className="stat-card info">
-              <div className="stat-icon">🎨</div>
-              <div className="stat-content">
-                <h3>{user.nftCount || 0}</h3>
-                <p>NFTs Created</p>
-                {user.receiptCount > 0 && user.nftCount === 0 && (
-                  <span className="stat-badge warning">Create your first!</span>
-                )}
               </div>
             </div>
 
