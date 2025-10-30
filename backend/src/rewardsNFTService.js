@@ -176,8 +176,9 @@ async function checkUserCanMint(userId, nftTypeId) {
       return { canMint: false, reason: "NFT is sold out" };
     }
 
-    // Check RVP token balance on Hedera
+    // Check RVP token balance on Hedera (blockchain only - no database fallback)
     let rvpBalance = 0;
+    
     try {
       rvpBalance = await htsPaymentService.getUserRVPBalance(userAccountId);
     } catch (error) {
@@ -185,7 +186,7 @@ async function checkUserCanMint(userId, nftTypeId) {
       return {
         canMint: false,
         reason:
-          "Unable to check RVP token balance. Please ensure your wallet is connected.",
+          "Unable to check RVP token balance. Please ensure your wallet is connected and associated with the RVP token. Use the 'Sync Points' button to convert database points to RVP tokens.",
       };
     }
 
@@ -266,14 +267,15 @@ async function mintNFTForUser(userId, nftTypeId) {
     console.log(`   User wallet: ${userAccountId}`);
 
     // Start transaction-like operations
-    // 1. Process RVP token payment (validate balance on Hedera)
+    // 1. Process RVP token payment (validate balance on Hedera blockchain)
     console.log(`💳 Validating RVP token payment...`);
+    
     const paymentResult = await htsPaymentService.processRVPPayment(
       userAccountId,
       nftType.point_cost,
       `NFT Purchase: ${nftType.name}`
     );
-
+    
     console.log(`✅ RVP payment validated: ${paymentResult.message}`);
     console.log(`   User RVP balance: ${paymentResult.userBalance}`);
     console.log(

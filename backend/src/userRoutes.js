@@ -792,7 +792,7 @@ router.post("/connect-wallet", authenticateToken, async (req, res) => {
           `🔄 Syncing ${pointsToSync} existing points to RVP tokens...`
         );
 
-        const htsPointsService = require("./services/htsPointsService");
+        const htsPointsService = require("./services/blockchain/htsPointsService");
         await htsPointsService.initialize();
         const syncResult = await htsPointsService.mintPoints(
           accountId,
@@ -806,6 +806,8 @@ router.post("/connect-wallet", authenticateToken, async (req, res) => {
             [pointsBalance, userId]
           );
           console.log(`✅ Synced ${pointsToSync} points to RVP tokens`);
+        } else if (syncResult && syncResult.notAssociated) {
+          console.log(`⚠️ Account not associated with RVP token - points remain in database`);
         }
       }
     } catch (syncError) {
@@ -859,6 +861,92 @@ router.post("/associate-rvp", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("❌ RVP association error:", error);
     res.status(500).json({ error: "Failed to associate RVP token" });
+  }
+});
+
+// Manual sync of database points to RVP tokens
+router.post("/sync-rvp-tokens", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get user's account info
+    const userResult = await query(
+      "SELECT hedera_account_id, hts_account_id, points_balance, hts_balance, hts_token_associated FROM users WHERE id = $1",
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = userResult.rows[0];
+    const accountId = user.hedera_account_id || user.hts_account_id;
+
+    if (!accountId) {
+      return res.status(400).json({
+        error: "Please connect your Hedera wallet first",
+      });
+    }
+
+    if (!user.hts_token_associated) {
+      return res.status(400).json({
+        error: "Please associate the RVP token first",
+      });
+    }
+
+    const pointsBalance = parseInt(user.points_balance) || 0;
+    const htsBalance = parseInt(user.hts_balance) || 0;
+    const pointsToSync = pointsBalance - htsBalance;
+
+    if (pointsToSync <= 0) {
+      return res.json({
+        success: true,
+        message: "No points to sync - all points are already on-chain",
+        pointsBalance,
+        htsBalance,
+      });
+    }
+
+    console.log(
+      `🔄 Manual sync requested: ${pointsToSync} points for user ${userId}`
+    );
+
+    const htsPointsService = require("./services/blockchain/htsPointsService");
+    await htsPointsService.initialize();
+    const syncResult = await htsPointsService.mintPoints(
+      accountId,
+      pointsToSync,
+      "Manual sync - converting database points to RVP tokens"
+    );
+
+    if (syncResult && syncResult.success) {
+      await query(
+        "UPDATE users SET hts_balance = $1, hts_last_sync = CURRENT_TIMESTAMP WHERE id = $2",
+        [pointsBalance, userId]
+      );
+      
+      console.log(`✅ Synced ${pointsToSync} points to RVP tokens for user ${userId}`);
+      
+      return res.json({
+        success: true,
+        message: `Successfully synced ${pointsToSync} points to RVP tokens`,
+        pointsSynced: pointsToSync,
+        txId: syncResult.transferTxId,
+        newBalance: pointsBalance,
+      });
+    } else if (syncResult && syncResult.notAssociated) {
+      return res.status(400).json({
+        error: "Account not associated with RVP token",
+      });
+    } else {
+      throw new Error("Failed to mint RVP tokens");
+    }
+  } catch (error) {
+    console.error("❌ RVP sync error:", error);
+    res.status(500).json({
+      error: "Failed to sync RVP tokens",
+      details: error.message,
+    });
   }
 });
 
