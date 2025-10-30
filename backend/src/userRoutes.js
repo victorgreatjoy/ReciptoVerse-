@@ -770,11 +770,48 @@ router.post("/connect-wallet", authenticateToken, async (req, res) => {
 
     // Update user's hedera_account_id and hts_account_id
     await query(
-      "UPDATE users SET hedera_account_id = $1, hts_account_id = $1 WHERE id = $2",
+      "UPDATE users SET hedera_account_id = $1, hts_account_id = $1, hts_token_associated = TRUE WHERE id = $2",
       [accountId, userId]
     );
 
     console.log(`✅ Wallet connected: ${accountId} for user ${userId}`);
+
+    // Try to sync existing points to RVP tokens
+    try {
+      const userResult = await query(
+        "SELECT points_balance, hts_balance FROM users WHERE id = $1",
+        [userId]
+      );
+
+      const pointsBalance = parseInt(userResult.rows[0]?.points_balance) || 0;
+      const htsBalance = parseInt(userResult.rows[0]?.hts_balance) || 0;
+      const pointsToSync = pointsBalance - htsBalance;
+
+      if (pointsToSync > 0) {
+        console.log(
+          `🔄 Syncing ${pointsToSync} existing points to RVP tokens...`
+        );
+
+        const htsPointsService = require("./services/htsPointsService");
+        await htsPointsService.initialize();
+        const syncResult = await htsPointsService.mintPoints(
+          accountId,
+          pointsToSync,
+          "Initial wallet connection - syncing existing points"
+        );
+
+        if (syncResult && syncResult.success) {
+          await query(
+            "UPDATE users SET hts_balance = $1, hts_last_sync = CURRENT_TIMESTAMP WHERE id = $2",
+            [pointsBalance, userId]
+          );
+          console.log(`✅ Synced ${pointsToSync} points to RVP tokens`);
+        }
+      }
+    } catch (syncError) {
+      console.log(`⚠️ Could not sync existing points:`, syncError.message);
+      // Don't fail wallet connection if sync fails
+    }
 
     res.json({
       success: true,

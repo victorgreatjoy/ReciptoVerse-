@@ -1,4 +1,5 @@
 const { query } = require("./database");
+const htsPaymentService = require("./services/htsPaymentService");
 const { v4: uuidv4 } = require("uuid");
 const hederaRewardNFTService = require("./hederaRewardNFTService");
 
@@ -137,9 +138,9 @@ async function getNFTTypeById(nftTypeId) {
  */
 async function checkUserCanMint(userId, nftTypeId) {
   try {
-    // Get user's points balance
+    // Get user's Hedera account and RVP token info
     const userResult = await query(
-      "SELECT points_balance FROM users WHERE id = $1",
+      "SELECT hedera_account_id, hts_account_id, hts_token_associated FROM users WHERE id = $1",
       [userId]
     );
 
@@ -147,7 +148,18 @@ async function checkUserCanMint(userId, nftTypeId) {
       return { canMint: false, reason: "User not found" };
     }
 
-    const userPoints = parseInt(userResult.rows[0].points_balance) || 0;
+    const userAccountId =
+      userResult.rows[0].hedera_account_id || userResult.rows[0].hts_account_id;
+    const tokenAssociated = userResult.rows[0].hts_token_associated;
+
+    // Check if user has connected wallet
+    if (!userAccountId) {
+      return {
+        canMint: false,
+        reason:
+          "Please connect your Hedera wallet first. Click the wallet icon in the top navigation.",
+      };
+    }
 
     // Get NFT type details
     const nftType = await getNFTTypeById(nftTypeId);
@@ -164,21 +176,39 @@ async function checkUserCanMint(userId, nftTypeId) {
       return { canMint: false, reason: "NFT is sold out" };
     }
 
-    if (userPoints < nftType.point_cost) {
+    // Check RVP token balance on Hedera
+    let rvpBalance = 0;
+    try {
+      rvpBalance = await htsPaymentService.getUserRVPBalance(userAccountId);
+    } catch (error) {
+      console.error("Error getting RVP balance:", error);
       return {
         canMint: false,
-        reason: "Insufficient points",
-        userPoints,
+        reason:
+          "Unable to check RVP token balance. Please ensure your wallet is connected.",
+      };
+    }
+
+    if (rvpBalance < nftType.point_cost) {
+      return {
+        canMint: false,
+        reason: "Insufficient RVP tokens",
+        userRVP: rvpBalance,
         required: nftType.point_cost,
-        shortfall: nftType.point_cost - userPoints,
+        shortfall: nftType.point_cost - rvpBalance,
+        message: `You need ${
+          nftType.point_cost
+        } RVP but only have ${rvpBalance} RVP. Earn ${
+          nftType.point_cost - rvpBalance
+        } more RVP by making purchases!`,
       };
     }
 
     return {
       canMint: true,
-      userPoints,
+      userRVP: rvpBalance,
       nftCost: nftType.point_cost,
-      remainingPoints: userPoints - nftType.point_cost,
+      remainingRVP: rvpBalance - nftType.point_cost,
     };
   } catch (error) {
     console.error("Error checking if user can mint:", error);
@@ -198,9 +228,9 @@ async function mintNFTForUser(userId, nftTypeId) {
       throw new Error(canMint.reason);
     }
 
-    // Get user's Hedera account ID
+    // Get user's Hedera account ID and HTS info
     const userResult = await query(
-      "SELECT hedera_account_id FROM users WHERE id = $1",
+      "SELECT hedera_account_id, hts_account_id, hts_token_associated FROM users WHERE id = $1",
       [userId]
     );
 
@@ -208,13 +238,16 @@ async function mintNFTForUser(userId, nftTypeId) {
       userId,
       rowsFound: userResult.rows.length,
       accountId: userResult.rows[0]?.hedera_account_id,
+      htsAccountId: userResult.rows[0]?.hts_account_id,
+      tokenAssociated: userResult.rows[0]?.hts_token_associated,
     });
 
     if (userResult.rows.length === 0) {
       throw new Error("User not found");
     }
 
-    const userAccountId = userResult.rows[0].hedera_account_id;
+    const userAccountId =
+      userResult.rows[0].hedera_account_id || userResult.rows[0].hts_account_id;
 
     console.log("🔍 Hedera account ID:", userAccountId);
 
@@ -229,19 +262,23 @@ async function mintNFTForUser(userId, nftTypeId) {
 
     console.log(`🎨 Starting NFT mint for user ${userId}...`);
     console.log(`   NFT: ${nftType.name}`);
-    console.log(`   Cost: ${nftType.point_cost} points`);
+    console.log(`   Cost: ${nftType.point_cost} RVP tokens`);
     console.log(`   User wallet: ${userAccountId}`);
 
     // Start transaction-like operations
-    // 1. Deduct points from user
-    const updatePointsSQL = `
-      UPDATE users 
-      SET points_balance = points_balance - $1
-      WHERE id = $2 AND points_balance >= $1
-    `;
+    // 1. Process RVP token payment (validate balance on Hedera)
+    console.log(`💳 Validating RVP token payment...`);
+    const paymentResult = await htsPaymentService.processRVPPayment(
+      userAccountId,
+      nftType.point_cost,
+      `NFT Purchase: ${nftType.name}`
+    );
 
-    await query(updatePointsSQL, [nftType.point_cost, userId]);
-    console.log(`✅ Deducted ${nftType.point_cost} points from user`);
+    console.log(`✅ RVP payment validated: ${paymentResult.message}`);
+    console.log(`   User RVP balance: ${paymentResult.userBalance}`);
+    console.log(
+      `   Remaining after purchase: ${paymentResult.remainingBalance}`
+    );
 
     // 2. Mint NFT on Hedera blockchain
     console.log("🔗 Minting NFT on Hedera...");
@@ -253,11 +290,7 @@ async function mintNFTForUser(userId, nftTypeId) {
     );
 
     if (!hederaMintResult.success) {
-      // Rollback points if Hedera mint failed
-      await query(
-        "UPDATE users SET points_balance = points_balance + $1 WHERE id = $2",
-        [nftType.point_cost, userId]
-      );
+      // No rollback needed for RVP tokens - payment was only validated, not transferred
       throw new Error(`Hedera mint failed: ${hederaMintResult.error}`);
     }
 
@@ -298,7 +331,7 @@ async function mintNFTForUser(userId, nftTypeId) {
       [nftTypeId]
     );
 
-    // 5. Record points transaction
+    // 5. Record RVP token transaction
     const transactionId = uuidv4();
     const insertTransactionSQL = `
       INSERT INTO points_transactions (
@@ -309,13 +342,13 @@ async function mintNFTForUser(userId, nftTypeId) {
     await query(insertTransactionSQL, [
       transactionId,
       userId,
-      "nft_purchase",
+      "nft_purchase_rvp",
       -nftType.point_cost,
-      `Minted ${nftType.name}`,
+      `Purchased ${nftType.name} with ${nftType.point_cost} RVP tokens`,
       new Date().toISOString(),
     ]);
 
-    console.log(`✅ Points transaction recorded`);
+    console.log(`✅ RVP transaction recorded`);
 
     // Get the newly minted NFT details
     const mintedNFT = await getUserNFTMintById(mintId);

@@ -274,6 +274,6 @@ Then visit **http://localhost:5173**
 ## 👥 Team & Contact
 
 Built by the ReceiptoVerse Team  
-🌐 **Website:** Coming soon  
-💬 **Contact:** receiptoverse@protonmail.com  
+🌐 **Website:** (https://receipto-verse.vercel.app/)  
+💬 **Contact:** receiptoverse@gmail.com
 🖤 Built with love on **Hedera**
