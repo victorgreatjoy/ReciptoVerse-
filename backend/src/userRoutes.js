@@ -807,7 +807,9 @@ router.post("/connect-wallet", authenticateToken, async (req, res) => {
           );
           console.log(`✅ Synced ${pointsToSync} points to RVP tokens`);
         } else if (syncResult && syncResult.notAssociated) {
-          console.log(`⚠️ Account not associated with RVP token - points remain in database`);
+          console.log(
+            `⚠️ Account not associated with RVP token - points remain in database`
+          );
         }
       }
     } catch (syncError) {
@@ -924,9 +926,11 @@ router.post("/sync-rvp-tokens", authenticateToken, async (req, res) => {
         "UPDATE users SET hts_balance = $1, hts_last_sync = CURRENT_TIMESTAMP WHERE id = $2",
         [pointsBalance, userId]
       );
-      
-      console.log(`✅ Synced ${pointsToSync} points to RVP tokens for user ${userId}`);
-      
+
+      console.log(
+        `✅ Synced ${pointsToSync} points to RVP tokens for user ${userId}`
+      );
+
       return res.json({
         success: true,
         message: `Successfully synced ${pointsToSync} points to RVP tokens`,
