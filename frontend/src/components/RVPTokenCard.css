@@ -40,7 +40,7 @@
 .rvp-token .connect-wallet-btn,
 .rvp-token .associate-btn {
   background: rgba(255, 255, 255, 0.95);
-  color: #667eea;
+  color: #667eea !important;
   border: none;
   padding: 10px 20px;
   border-radius: 8px;
