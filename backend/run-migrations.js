@@ -8,61 +8,61 @@ const fs = require("fs");
 const path = require("path");
 
 async function runMigrations() {
-    // Ensure hts_account_id column exists in receipts table
-    console.log("\n🔎 Checking hts_account_id in receipts table...");
-    try {
-      if (pool) {
-        const checkColumn = await query(`
+  // Ensure hts_account_id column exists in receipts table
+  console.log("\n🔎 Checking hts_account_id in receipts table...");
+  try {
+    if (pool) {
+      const checkColumn = await query(`
           SELECT column_name 
           FROM information_schema.columns 
           WHERE table_name = 'receipts' AND column_name = 'hts_account_id'
         `);
-        if (checkColumn.rows.length === 0) {
-          console.log("⚠️ hts_account_id column missing, adding it...");
-          await query(`ALTER TABLE receipts ADD COLUMN hts_account_id TEXT`);
-          console.log("✅ Added hts_account_id column to receipts table");
-        } else {
-          console.log("✅ hts_account_id column already exists");
-        }
-      }
-    } catch (error) {
-      if (
-        error.message.includes("already exists") ||
-        error.message.includes("duplicate")
-      ) {
-        console.log("✅ hts_account_id column already exists");
+      if (checkColumn.rows.length === 0) {
+        console.log("⚠️ hts_account_id column missing, adding it...");
+        await query(`ALTER TABLE receipts ADD COLUMN hts_account_id TEXT`);
+        console.log("✅ Added hts_account_id column to receipts table");
       } else {
-        console.error("❌ Error with hts_account_id column:", error.message);
+        console.log("✅ hts_account_id column already exists");
       }
     }
+  } catch (error) {
+    if (
+      error.message.includes("already exists") ||
+      error.message.includes("duplicate")
+    ) {
+      console.log("✅ hts_account_id column already exists");
+    } else {
+      console.error("❌ Error with hts_account_id column:", error.message);
+    }
+  }
 
-    // Ensure hcs_topic_id column exists in receipts table
-    console.log("\n🔎 Checking hcs_topic_id in receipts table...");
-    try {
-      if (pool) {
-        const checkColumn = await query(`
+  // Ensure hcs_topic_id column exists in receipts table
+  console.log("\n🔎 Checking hcs_topic_id in receipts table...");
+  try {
+    if (pool) {
+      const checkColumn = await query(`
           SELECT column_name 
           FROM information_schema.columns 
           WHERE table_name = 'receipts' AND column_name = 'hcs_topic_id'
         `);
-        if (checkColumn.rows.length === 0) {
-          console.log("⚠️ hcs_topic_id column missing, adding it...");
-          await query(`ALTER TABLE receipts ADD COLUMN hcs_topic_id TEXT`);
-          console.log("✅ Added hcs_topic_id column to receipts table");
-        } else {
-          console.log("✅ hcs_topic_id column already exists");
-        }
-      }
-    } catch (error) {
-      if (
-        error.message.includes("already exists") ||
-        error.message.includes("duplicate")
-      ) {
-        console.log("✅ hcs_topic_id column already exists");
+      if (checkColumn.rows.length === 0) {
+        console.log("⚠️ hcs_topic_id column missing, adding it...");
+        await query(`ALTER TABLE receipts ADD COLUMN hcs_topic_id TEXT`);
+        console.log("✅ Added hcs_topic_id column to receipts table");
       } else {
-        console.error("❌ Error with hcs_topic_id column:", error.message);
+        console.log("✅ hcs_topic_id column already exists");
       }
     }
+  } catch (error) {
+    if (
+      error.message.includes("already exists") ||
+      error.message.includes("duplicate")
+    ) {
+      console.log("✅ hcs_topic_id column already exists");
+    } else {
+      console.error("❌ Error with hcs_topic_id column:", error.message);
+    }
+  }
   try {
     console.log("🚀 Starting database migrations...");
     console.log("Database type:", pool ? "PostgreSQL" : "SQLite");

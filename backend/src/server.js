@@ -101,6 +101,15 @@ const PINATA_JWT = config.ipfs.pinataJwt;
 
 // Initialize database and user routes
 async function startServer() {
+  // Run migrations to ensure required columns exist
+  try {
+    const runMigrations = require("../run-migrations");
+    if (typeof runMigrations === "function") {
+      await runMigrations();
+    }
+  } catch (err) {
+    console.error("❌ Migration script error:", err);
+  }
   try {
     // Initialize database
     await initializeDatabase();
