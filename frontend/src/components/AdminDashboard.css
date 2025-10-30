@@ -1,3 +1,46 @@
+/* Admin Dashboard Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 32px;
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 10px;
+  border: 1.5px solid #e0e7ef;
+  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.06);
+}
+
+.admin-tabs button {
+  flex: 1;
+  padding: 14px 0;
+  background: #f8fafc;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2563eb !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 4px rgba(30, 64, 175, 0.04);
+}
+
+.admin-tabs button:hover {
+  background: #e0e7ff;
+  color: #1e293b !important;
+}
+
+.admin-tabs button.active {
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+  color: #fff !important;
+  border: none;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.18);
+}
 /* Admin Dashboard Styles */
 .admin-login {
   display: flex;

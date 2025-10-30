@@ -1,3 +1,10 @@
+.btn-secondary:hover {
+  color: #2563eb !important;
+}
+/* Force secondary button text color to blue for readability */
+.btn-secondary {
+  color: #2563eb !important;
+}
 /* User QR Code Component Styles */
 .qr-section {
   max-width: 800px;
@@ -318,11 +325,13 @@
   .qr-actions {
     flex-direction: column;
     align-items: center;
+    color: #667eea !important;
   }
 
   .qr-actions button {
     width: 100%;
     max-width: 300px;
+    color: #667eea !important;
   }
 
   .barcode-info {

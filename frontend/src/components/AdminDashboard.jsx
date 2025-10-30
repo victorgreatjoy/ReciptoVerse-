@@ -254,18 +254,7 @@ const AdminDashboard = () => {
         >
           🏪 Merchants
         </button>
-        <button
-          className={activeTab === "admins" ? "active" : ""}
-          onClick={() => setActiveTab("admins")}
-        >
-          👑 Admin Management
-        </button>
-        <button
-          className={activeTab === "nft" ? "active" : ""}
-          onClick={() => setActiveTab("nft")}
-        >
-          🎯 NFT Settings
-        </button>
+        
       </div>
 
       <div className="admin-content">
