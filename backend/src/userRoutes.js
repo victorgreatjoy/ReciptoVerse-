@@ -768,11 +768,11 @@ router.post("/connect-wallet", authenticateToken, async (req, res) => {
       });
     }
 
-    // Update user's hedera_account_id
-    await query("UPDATE users SET hedera_account_id = $1 WHERE id = $2", [
-      accountId,
-      userId,
-    ]);
+    // Update user's hedera_account_id and hts_account_id
+    await query(
+      "UPDATE users SET hedera_account_id = $1, hts_account_id = $1 WHERE id = $2",
+      [accountId, userId]
+    );
 
     console.log(`✅ Wallet connected: ${accountId} for user ${userId}`);
 
