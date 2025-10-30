@@ -121,7 +121,7 @@ async function startServer() {
         );
       }
 
-      // Check users table
+      // Check users table for hts_account_id
       const checkUsersColumn = await query(`
         SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'hts_account_id'
       `);
@@ -134,9 +134,27 @@ async function startServer() {
       } else {
         console.log("✅ hts_account_id column already exists in users table");
       }
+
+      // Check users table for hts_token_associated
+      const checkTokenAssocColumn = await query(`
+        SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'hts_token_associated'
+      `);
+      if (checkTokenAssocColumn.rows.length === 0) {
+        console.log(
+          "⚠️ hts_token_associated column missing in users table, adding it..."
+        );
+        await query(
+          `ALTER TABLE users ADD COLUMN hts_token_associated BOOLEAN DEFAULT FALSE`
+        );
+        console.log("✅ Added hts_token_associated column to users table");
+      } else {
+        console.log(
+          "✅ hts_token_associated column already exists in users table"
+        );
+      }
     }
   } catch (err) {
-    console.error("❌ Error ensuring hts_account_id column:", err);
+    console.error("❌ Error ensuring HTS columns:", err);
   }
   try {
     // Initialize database
