@@ -101,6 +101,24 @@ const PINATA_JWT = config.ipfs.pinataJwt;
 
 // Initialize database and user routes
 async function startServer() {
+  // Ensure hts_account_id column exists in receipts table before anything else
+  try {
+    const { query, pool } = require("./database");
+    if (pool) {
+      const checkColumn = await query(`
+        SELECT column_name FROM information_schema.columns WHERE table_name = 'receipts' AND column_name = 'hts_account_id'
+      `);
+      if (checkColumn.rows.length === 0) {
+        console.log("⚠️ hts_account_id column missing, adding it...");
+        await query(`ALTER TABLE receipts ADD COLUMN hts_account_id TEXT`);
+        console.log("✅ Added hts_account_id column to receipts table");
+      } else {
+        console.log("✅ hts_account_id column already exists");
+      }
+    }
+  } catch (err) {
+    console.error("❌ Error ensuring hts_account_id column:", err);
+  }
   try {
     // Initialize database
     await initializeDatabase();
