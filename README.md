@@ -271,6 +271,36 @@ Then visit **http://localhost:5173**
 
 ---
 
+## 🎓 Hedera Certifications
+
+Our team has completed official Hedera certification programs, demonstrating deep expertise in the Hedera ecosystem:
+
+### Hashgraph Developer Course - Certificate of Completion
+
+Our team members have successfully completed the official Hashgraph Developer Course by The Hashgraph Association:
+
+#### Leandro Mirante
+
+_Completed: September 27, 2025_
+
+![Leandro Mirante - Hashgraph Developer Certificate](LeandroCertifcate.png)
+
+#### Victor Chimdi Egbelu
+
+_Completed: October 30, 2025_
+
+![Victor Chimdi Egbelu - Hashgraph Developer Certificate](VictorCertificate.png)
+
+---
+
+## 📊 Pitch Deck
+
+Want to learn more about ReceiptoVerse? Check out our comprehensive pitch deck:
+
+**[📥 View Pitch Deck](https://docs.google.com/presentation/d/147-TXUwplYodft6n7dmT95aEmylAei9l/edit?usp=drivesdk&ouid=110998729285674486631&rtpof=true&sd=true)**
+
+---
+
 ## 👥 Team & Contact
 
 Built by the ReceiptoVerse Team  
