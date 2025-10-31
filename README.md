@@ -293,11 +293,18 @@ _Completed: October 30, 2025_
 
 ---
 
+## ▶️ Demo Video
+
+See our Demo Video:
+
+**[📥 View Demo Video](https://drive.google.com/file/d/1kxYJ0Yl48BZbnySvuPpYtL6h7Ql2Ala4/view?usp=drivesdk)**
+
+
 ## 📊 Pitch Deck
 
 Want to learn more about ReceiptoVerse? Check out our comprehensive pitch deck:
 
-**[📥 View Pitch Deck](https://docs.google.com/presentation/d/147-TXUwplYodft6n7dmT95aEmylAei9l/edit?usp=drivesdk&ouid=110998729285674486631&rtpof=true&sd=true)**
+**[📥 View Pitch Deck](https://docs.google.com/presentation/d/1mLgGDtymqDtWkNyAyWcpAjb7H-Iq4VUX/edit?usp=drivesdk&ouid=110998729285674486631&rtpof=true&sd=true)**
 
 ---
 
